@@ -67,9 +67,9 @@ and Alembic. See `docs/stack.md` for responsibilities and rationale. Exact setup
 run, test, lint, and formatting commands will be added when the application
 skeleton is created.
 
-Development uses short-lived branches into `dev`, milestone pull requests from
-`dev` to `main`, test-driven development for behavioral changes, and required
-GitHub Actions checks. See `docs/development-workflow.md`.
+Development uses short-lived branches with pull requests directly into protected
+`main`, test-driven development for behavioral changes, and required GitHub
+Actions checks. See `docs/development-workflow.md`.
 
 Local secrets belong in `.env`, which is ignored by Git. Copy `.env.example`
 when configuration is introduced; never commit credentials.

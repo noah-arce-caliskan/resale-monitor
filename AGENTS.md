@@ -77,11 +77,10 @@ explicit uncertainty. Mopeds and scooters are the first category.
 ## Branching, CI, and pull requests
 
 - Keep `main` stable and release-ready. Do not develop directly on `main`.
-- Use `dev` as the integration branch. Create a short-lived `feat/`, `fix/`, or
-  `chore/` branch from `dev` for each scoped change; do not develop directly on
-  `dev` either.
-- Open feature pull requests into `dev`. Open a milestone pull request from
-  `dev` into `main` after the integrated milestone is green and reviewable.
+- Create a short-lived `feat/`, `fix/`, or `chore/` branch from current `main`
+  for each scoped change.
+- Open every feature pull request directly into `main` after rebasing or merging
+  current `main` and passing the required checks.
 - Keep pull requests small enough to review as one coherent outcome.
 - CI is required from the foundation PR onward. Do not merge with failing
   required checks.

@@ -10,19 +10,17 @@ contains the rationale and detailed contract.
 ## Branch model
 
 - `main` is stable, protected, and suitable for a tagged release.
-- `dev` is the protected integration branch for the next coherent milestone.
-- Every code change uses a short-lived branch from current `dev`:
+- Every code change uses a short-lived branch from current `main`:
   `feat/<scope>`, `fix/<scope>`, or `chore/<scope>`.
-- Feature pull requests target `dev`. Do not commit directly to `dev` or `main`.
-- When a roadmap milestone is integrated and green, open one reviewable pull
-  request from `dev` to `main`.
-- After merging a milestone, synchronize `dev` with `main` before beginning the
-  next milestone.
+- Pull requests target `main`; do not commit directly to `main`.
+- Before review, bring the branch up to date with `main`, resolve conflicts on
+  the feature branch, and rerun the complete local CI equivalent.
+- Delete the feature branch after squash merging.
 
-This branch model intentionally adds an integration step because the project
-owner chose a `dev` workflow. If it creates stale branches or oversized milestone
-pull requests, simplify to short-lived branches directly into `main` and record
-the superseding decision.
+A long-lived `dev` branch is deliberately excluded while this is a solo project
+without a staging deployment. Add an integration branch only when multiple
+parallel contributors, release trains, or a real staging environment create a
+demonstrable need.
 
 ## Pull-request contract
 
@@ -94,7 +92,7 @@ Tests use local fixtures and never automate restricted third-party sites.
 ## Continuous integration
 
 GitHub Actions begins with the foundation pull request. Workflows run on pull
-requests targeting `dev` or `main` and on pushes to those branches.
+requests targeting `main` and on pushes to `main`.
 
 Required backend checks:
 
@@ -123,8 +121,7 @@ the workflow the minimum token permissions it needs.
 
 ## Branch protection
 
-After the first workflow has completed successfully, protect both `dev` and
-`main`:
+After the first workflow has completed successfully, protect `main`:
 
 - Require pull requests.
 - Require the relevant CI checks to pass.
@@ -132,9 +129,8 @@ After the first workflow has completed successfully, protect both `dev` and
 - Do not require another human approval while the repository has one developer.
 - Prefer squash merging and a linear, understandable permanent history.
 
-`main` additionally accepts changes only from the milestone promotion flow,
-except a documented emergency fix branched from `main`, tested through CI, and
-then merged back into `dev`.
+Emergency fixes still branch from `main`, pass the same checks, and return by
+pull request; urgency does not justify bypassing the test and review trail.
 
 ## Continuous delivery
 

@@ -308,6 +308,20 @@ from restating the workflow, while feature branches and pull requests preserve a
 clear engineering history. CD without an environment would add configuration
 without delivering or protecting a real product.
 
+## 2026-08-19: Direct feature pull requests to main supersede dev integration
+
+**Decision:** Create short-lived feature, fix, and chore branches from current
+`main` and merge them directly back through protected pull requests. Do not keep
+a long-lived `dev` branch unless a staging environment, release train, or
+multiple parallel contributors later creates a concrete need. This supersedes
+the `dev` integration portion of the earlier TDD and CI workflow decision; its
+TDD, CI, protection, and CD-deferral decisions remain in force.
+
+**Reason:** For a solo project, `dev` adds branch drift, duplicate promotion pull
+requests, and larger review surfaces without providing a separate environment or
+coordination benefit. Small direct pull requests exercise CI on the exact unit
+being merged and keep `main` continuously understandable.
+
 ## Open decisions
 
 - Future deployment target.

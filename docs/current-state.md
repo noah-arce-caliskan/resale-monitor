@@ -60,10 +60,9 @@ constants are versioned hypotheses that must be evaluated with fixtures and
 real reviewed evidence.
 
 Engineering follows `docs/development-workflow.md`: behavioral changes use
-red-green-refactor, short-lived feature branches target the `dev` integration
-branch, milestone pull requests promote `dev` to protected `main`, and GitHub
-Actions checks are required from the foundation PR onward. Continuous deployment
-is deferred until a real deployment target exists.
+red-green-refactor, short-lived branches open pull requests directly into
+protected `main`, and GitHub Actions checks are required from the foundation PR
+onward. Continuous deployment is deferred until a real deployment target exists.
 
 The interface has four primary screens: Watchlists, Create or Edit Watchlist,
 Deal Feed, and Listing Workspace. Manual listing entry and attribute correction
@@ -110,8 +109,8 @@ Notifications, public accounts, and seller communication come later.
   more complex pricing model.
 - Use test-driven development for behavioral changes and deterministic fixtures
   instead of live external services in the default test suite.
-- Require CI on pull requests, integrate through `dev`, and promote milestones
-  to protected `main`; defer CD until hosting exists.
+- Require CI on short-lived pull requests directly into protected `main`; defer
+  CD until hosting exists.
 
 ## Open decisions
 
@@ -124,9 +123,9 @@ Notifications, public accounts, and seller communication come later.
 ## Next implementation step
 
 Begin in a fresh task opened directly on the Desktop repository. Verify the Git
-root, create `dev` from `main`, then create `feat/project-foundation` from `dev`.
-Build the application skeleton, local checks, initial Alembic infrastructure,
-and GitHub Actions described in `docs/development-workflow.md`. Subsequent pull
+root, then create `feat/project-foundation` from current `main`. Build the
+application skeleton, local checks, initial Alembic infrastructure, and GitHub
+Actions described in `docs/development-workflow.md`. Subsequent short-lived pull
 requests implement the schema and eBay vertical slice with separate Hartford
 acquisition and nationwide reference runs. After that loop works, research and
 fixture-test a Facebook adapter; do not activate automated collection without an

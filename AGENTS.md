@@ -13,6 +13,8 @@ explicit uncertainty. Mopeds and scooters are the first category.
 - Treat `docs/mvp.md` as the current product boundary.
 - Check `docs/decisions.md` before changing architecture or product behavior.
 - Check `docs/data-and-compliance.md` before adding a data source or automation.
+- Follow `docs/development-workflow.md` for branching, TDD, CI, and pull-request
+  expectations.
 
 ## Living project memory
 
@@ -53,6 +55,9 @@ explicit uncertainty. Mopeds and scooters are the first category.
   when durable.
 - Milestone or immediate next step: `docs/roadmap.md` when the roadmap changes,
   and always `docs/current-state.md`.
+- Branching, testing, CI, or pull-request workflow:
+  `docs/development-workflow.md`, this file, `docs/current-state.md`, and
+  `docs/decisions.md` when durable.
 
 ## Working agreements
 
@@ -63,8 +68,27 @@ explicit uncertainty. Mopeds and scooters are the first category.
 - State assumptions when requirements or data are ambiguous.
 - Ask before adding a production dependency or changing public interfaces.
 - Add or update tests for behavior changes.
+- For domain behavior, bug fixes, adapters, persistence, and valuation rules,
+  write a failing test first, then make it pass and refactor.
+- Do not weaken, delete, or skip a valid test merely to make a change pass.
 - Run the documented checks before declaring work complete.
 - Report files changed, checks run, results, and remaining risks.
+
+## Branching, CI, and pull requests
+
+- Keep `main` stable and release-ready. Do not develop directly on `main`.
+- Use `dev` as the integration branch. Create a short-lived `feat/`, `fix/`, or
+  `chore/` branch from `dev` for each scoped change; do not develop directly on
+  `dev` either.
+- Open feature pull requests into `dev`. Open a milestone pull request from
+  `dev` into `main` after the integrated milestone is green and reviewable.
+- Keep pull requests small enough to review as one coherent outcome.
+- CI is required from the foundation PR onward. Do not merge with failing
+  required checks.
+- CI verifies committed code and must not silently rewrite or commit formatting
+  changes.
+- Deployment automation is deferred until the product has a real deployment
+  target.
 
 ## Product constraints
 
@@ -97,6 +121,7 @@ explicit uncertainty. Mopeds and scooters are the first category.
 
 ## Current commands
 
-No application stack or commands have been selected. Replace this section with
-exact setup, development, test, lint, and format commands when the first
-application skeleton is created.
+The stack is selected, but no application skeleton exists yet. The foundation
+PR must replace this section with exact setup, development, migration, test,
+lint, type-check, format, and build commands that match local development and
+CI.

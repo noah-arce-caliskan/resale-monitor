@@ -294,6 +294,20 @@ and backtesting reviewable.
 inspect, run, and build upon without imposing a copyleft commitment on a product
 whose eventual commercial direction is still unknown.
 
+## 2026-08-19: TDD, required CI, and dev integration workflow
+
+**Decision:** Use test-driven development for behavioral code, establish GitHub
+Actions in the foundation pull request, and require its checks before merge.
+Develop on short-lived feature branches targeting a protected `dev` integration
+branch, then promote coherent milestones through pull requests from `dev` to
+protected `main`. Defer continuous deployment until a deployment target exists.
+
+**Reason:** Tests and automated checks make rapid AI-assisted implementation
+reviewable and repeatable. Repository-level instructions prevent each prompt
+from restating the workflow, while feature branches and pull requests preserve a
+clear engineering history. CD without an environment would add configuration
+without delivering or protecting a real product.
+
 ## Open decisions
 
 - Future deployment target.

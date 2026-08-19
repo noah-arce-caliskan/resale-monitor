@@ -45,6 +45,7 @@ targets but are enabled only through an authorized acquisition method.
 - [Thin-slice screens and user journey](docs/user-journey.md)
 - [Architecture](docs/architecture.md)
 - [Technology stack](docs/stack.md)
+- [Development workflow](docs/development-workflow.md)
 - [Database model](docs/data-model.md)
 - [Valuation and evidence policy](docs/valuation.md)
 - [Roadmap](docs/roadmap.md)
@@ -65,6 +66,10 @@ TypeScript frontend built with Vite, and SQLite persistence through SQLAlchemy
 and Alembic. See `docs/stack.md` for responsibilities and rationale. Exact setup,
 run, test, lint, and formatting commands will be added when the application
 skeleton is created.
+
+Development uses short-lived branches into `dev`, milestone pull requests from
+`dev` to `main`, test-driven development for behavioral changes, and required
+GitHub Actions checks. See `docs/development-workflow.md`.
 
 Local secrets belong in `.env`, which is ignored by Git. Copy `.env.example`
 when configuration is introduced; never commit credentials.

@@ -9,6 +9,8 @@
 - Implement the selected Python/FastAPI and React/TypeScript stack recorded in
   `docs/stack.md`.
 - Create the application skeleton, local development workflow, and CI checks.
+- Protect `dev` and `main` after the initial GitHub Actions checks exist, and use
+  the pull-request flow in `docs/development-workflow.md`.
 - Implement the canonical schema defined in `docs/data-model.md` through an
   initial reviewed Alembic migration.
 - Implement and fixture-test the versioned deterministic calculation contract in

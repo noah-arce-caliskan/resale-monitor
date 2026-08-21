@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Stylized moped demo image">
+  <rect width="800" height="600" fill="#dfe7df"/>
+  <circle cx="250" cy="440" r="82" fill="#f7f3e8" stroke="#20372d" stroke-width="24"/>
+  <circle cx="610" cy="440" r="82" fill="#f7f3e8" stroke="#20372d" stroke-width="24"/>
+  <path d="M250 430 355 280h145l110 150M330 430h210l-68-145" fill="none" stroke="#2f7658" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M468 285 520 190h72M355 280l-35-70h-80" fill="none" stroke="#20372d" stroke-width="24" stroke-linecap="round"/>
+  <rect x="330" y="245" width="160" height="66" rx="30" fill="#c47032"/>
+  <circle cx="250" cy="440" r="18" fill="#20372d"/><circle cx="610" cy="440" r="18" fill="#20372d"/>
+  <text x="400" y="100" text-anchor="middle" fill="#37624f" font-family="system-ui,sans-serif" font-size="30" font-weight="700" letter-spacing="6">DEMO LISTING</text>
+</svg>

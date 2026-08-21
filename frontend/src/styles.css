@@ -133,3 +133,196 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+.app-shell {
+  display: grid;
+  grid-template: auto 1fr / 18rem 1fr;
+  min-height: 100vh;
+  background: #f4f1e8;
+}
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #d8d5ca;
+  background: #faf8f2;
+}
+.topbar h1 {
+  max-width: none;
+  font-size: clamp(1.8rem, 4vw, 3.2rem);
+}
+.sidebar {
+  padding: 1.5rem;
+  border-right: 1px solid #d8d5ca;
+  background: #e9eee5;
+}
+.section-label {
+  color: #617064;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.watch {
+  display: grid;
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 1rem;
+  border-radius: 1rem;
+  color: #20372d;
+  background: transparent;
+  text-align: left;
+}
+.watch:hover {
+  background: #fff;
+}
+.watch small {
+  margin-top: 0.35rem;
+  color: #617064;
+}
+.workspace {
+  padding: clamp(1.5rem, 4vw, 3.5rem);
+}
+.workspace-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.workspace-heading h2,
+.empty h2,
+.dialog h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 500;
+}
+.workspace-heading > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #617064;
+}
+.empty {
+  max-width: 48rem;
+  margin: 8vh auto;
+  padding: 3rem;
+  border: 1px dashed #9ba99d;
+  border-radius: 2rem;
+  background: rgb(255 255 255 / 55%);
+}
+.empty.compact {
+  margin: 2rem 0;
+}
+.deal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1.25rem;
+}
+.deal-card {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid #dad7cc;
+  border-radius: 1.5rem;
+  color: #1b211c;
+  background: #fff;
+  text-align: left;
+  box-shadow: 0 1rem 2.5rem rgb(35 45 38 / 8%);
+}
+.deal-card img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #dde5dd;
+}
+.deal-card > div {
+  padding: 1.25rem;
+}
+.deal-card h3 {
+  min-height: 2.5em;
+  margin: 0.75rem 0;
+  font-family: Georgia, serif;
+  font-size: 1.4rem;
+}
+.label {
+  display: inline-block;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  color: #24523e;
+  background: #dcecdf;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.advantage {
+  padding-top: 0.8rem;
+  border-top: 1px solid #ece9df;
+  color: #2f7658;
+  font-weight: 800;
+}
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(20 29 24 / 58%);
+  backdrop-filter: blur(5px);
+}
+.dialog {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 36rem);
+  max-height: 90vh;
+  overflow: auto;
+  padding: 2rem;
+  border-radius: 1.5rem;
+  background: #faf8f2;
+  box-shadow: 0 2rem 8rem rgb(0 0 0 / 25%);
+}
+.dialog label {
+  display: grid;
+  gap: 0.4rem;
+  font-weight: 700;
+}
+.dialog input {
+  padding: 0.8rem 1rem;
+  border: 1px solid #aeb7ae;
+  border-radius: 0.8rem;
+  background: #fff;
+  font: inherit;
+}
+.dialog > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+@media (max-width: 48rem) {
+  .app-shell {
+    grid-template: auto auto 1fr / 1fr;
+  }
+  .topbar {
+    align-items: center;
+  }
+  .sidebar {
+    display: flex;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid #d8d5ca;
+  }
+  .sidebar .section-label {
+    display: none;
+  }
+  .watch {
+    min-width: 12rem;
+  }
+  .workspace-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+}

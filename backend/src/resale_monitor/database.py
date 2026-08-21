@@ -4,6 +4,7 @@ from pathlib import Path
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Connection, make_url
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import ConnectionPoolEntry
 
 
@@ -11,6 +12,7 @@ class Database:
     def __init__(self, database_url: str) -> None:
         self._prepare_sqlite_directory(database_url)
         self.engine = create_engine(database_url)
+        self._session_factory = sessionmaker(self.engine, expire_on_commit=False)
 
         if self.engine.dialect.name == "sqlite":
             event.listen(self.engine, "connect", self._configure_sqlite)
@@ -38,6 +40,16 @@ class Database:
     def connect(self) -> Iterator[Connection]:
         with self.engine.connect() as connection:
             yield connection
+
+    @contextmanager
+    def session(self) -> Iterator[Session]:
+        with self._session_factory() as session:
+            try:
+                yield session
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
 
     def is_ready(self) -> bool:
         try:

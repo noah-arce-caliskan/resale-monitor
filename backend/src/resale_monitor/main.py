@@ -5,6 +5,7 @@ from fastapi import FastAPI
 
 from resale_monitor import __version__
 from resale_monitor.api.health import router as health_router
+from resale_monitor.api.watchlists import router as watchlists_router
 from resale_monitor.config import Settings
 from resale_monitor.database import create_database
 
@@ -26,6 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = app_settings
     app.state.database = database
     app.include_router(health_router)
+    app.include_router(watchlists_router)
     return app
 
 

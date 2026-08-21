@@ -6,6 +6,7 @@ from httpx import ASGITransport, AsyncClient
 
 from resale_monitor.config import Settings
 from resale_monitor.main import create_app
+from resale_monitor.models import metadata
 
 
 @pytest.fixture
@@ -21,6 +22,7 @@ def anyio_backend() -> str:
 @pytest.fixture
 async def client(database_url: str) -> AsyncIterator[AsyncClient]:
     app = create_app(Settings(database_url=database_url))
+    metadata.create_all(app.state.database.engine)
     transport = ASGITransport(app=app)
 
     async with (

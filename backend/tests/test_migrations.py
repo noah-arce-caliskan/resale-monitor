@@ -20,5 +20,5 @@ def test_foundation_database_upgrades_to_head(
     engine = create_engine(database_url)
     with engine.connect() as connection:
         context = MigrationContext.configure(connection)
-        assert context.get_current_revision() == "20260821_0001"
+        assert context.get_current_revision() == "6a3fd871238f"
     engine.dispose()

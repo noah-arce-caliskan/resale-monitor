@@ -12,3 +12,6 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     data_dir: str = "./data/local"
     database_url: str = "sqlite:///./data/local/resale-monitor.sqlite3"
+    source_mode: str = "fixture"
+    ebay_client_id: str | None = None
+    ebay_client_secret: str | None = None

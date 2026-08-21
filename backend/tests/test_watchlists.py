@@ -50,3 +50,40 @@ async def test_create_watchlist_rejects_invalid_price_range(
     )
 
     assert response.status_code == 422
+
+
+async def test_fixture_run_builds_ranked_feed_and_is_idempotent(
+    client: AsyncClient,
+) -> None:
+    created = await client.post(
+        "/api/watchlists",
+        json={
+            "name": "Mopeds near Hartford",
+            "query": "moped scooter",
+            "center_place": "Hartford, CT",
+            "radius_miles": 50,
+        },
+    )
+    watchlist_id = created.json()["id"]
+
+    first = await client.post(f"/api/watchlists/{watchlist_id}/runs")
+    second = await client.post(f"/api/watchlists/{watchlist_id}/runs")
+    detail = await client.get(f"/api/watchlists/{watchlist_id}")
+
+    assert first.status_code == 200
+    assert first.json() == {
+        "records_seen": 7,
+        "new_listings": 7,
+        "changed_listings": 0,
+    }
+    assert second.json() == {
+        "records_seen": 7,
+        "new_listings": 0,
+        "changed_listings": 0,
+    }
+    assert detail.status_code == 200
+    payload = detail.json()
+    assert payload["reference_count"] == 5
+    assert len(payload["feed"]) == 2
+    assert payload["feed"][0]["opportunity_label"] in {"promising", "watch"}
+    assert payload["feed"][0]["image_url"] == "/demo-moped.svg"

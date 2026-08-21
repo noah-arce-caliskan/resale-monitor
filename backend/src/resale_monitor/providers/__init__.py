@@ -1,0 +1,1 @@
+"""Authorized marketplace provider adapters."""

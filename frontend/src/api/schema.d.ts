@@ -38,10 +38,67 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/watchlists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List All */
+        get: operations["list_all_api_watchlists_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_api_watchlists_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/watchlists/{watchlist_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detail */
+        get: operations["detail_api_watchlists__watchlist_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/watchlists/{watchlist_id}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run */
+        post: operations["run_api_watchlists__watchlist_id__runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
         /** LiveResponse */
         LiveResponse: {
             /**
@@ -81,6 +138,81 @@ export interface components {
              * @constant
              */
             status: "ok";
+        };
+        /** SearchScopeRead */
+        SearchScopeRead: {
+            /** Enabled */
+            enabled: boolean;
+            /** Geography */
+            geography: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: string;
+            /** Provider */
+            provider: string;
+            /** Purpose */
+            purpose: string;
+            /** Query */
+            query: {
+                [key: string]: unknown;
+            };
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
+        /** WatchlistCreate */
+        WatchlistCreate: {
+            /** Center Place */
+            center_place: string;
+            /** Maximum Price Minor */
+            maximum_price_minor?: number | null;
+            /** Minimum Price Minor */
+            minimum_price_minor?: number | null;
+            /** Name */
+            name: string;
+            /** Query */
+            query: string;
+            /** Radius Miles */
+            radius_miles: number;
+        };
+        /** WatchlistRead */
+        WatchlistRead: {
+            /** Category */
+            category: string;
+            /** Center Place */
+            center_place: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Currency */
+            currency: string;
+            /** Id */
+            id: string;
+            /** Maximum Price Minor */
+            maximum_price_minor: number | null;
+            /** Minimum Price Minor */
+            minimum_price_minor: number | null;
+            /** Name */
+            name: string;
+            /** Radius Miles */
+            radius_miles: number;
+            /** Scopes */
+            scopes: components["schemas"]["SearchScopeRead"][];
+            /** Status */
+            status: string;
         };
     };
     responses: never;
@@ -127,6 +259,125 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LiveResponse"];
+                };
+            };
+        };
+    };
+    list_all_api_watchlists_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchlistRead"][];
+                };
+            };
+        };
+    };
+    create_api_watchlists_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WatchlistCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WatchlistRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detail_api_watchlists__watchlist_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                watchlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_api_watchlists__watchlist_id__runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                watchlist_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

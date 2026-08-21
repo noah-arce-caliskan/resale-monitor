@@ -135,6 +135,20 @@ lifecycle behavior.
 - Keep immutable evidence and version rows separate from mutable current-state
   pointers and feed projections. See `docs/data-model.md`.
 
+The foundation migration is an explicit empty baseline that proves fresh
+database upgrades and records the migration lineage before domain tables exist.
+The reviewed schema pull requests in `docs/development-workflow.md` add the
+canonical tables in coherent relationship groups rather than one oversized
+migration.
+
+## Foundation health slice
+
+- `GET /api/health/live` reports process liveness without depending on SQLite.
+- `GET /api/health` verifies the configured database is reachable and returns
+  `503` when readiness fails.
+- The React shell consumes the generated readiness contract and shows ready,
+  unavailable, and retry states.
+
 ## Valuation boundary
 
 Valuation follows the evidence hierarchy and formulas in `docs/valuation.md`.

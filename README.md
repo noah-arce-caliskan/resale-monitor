@@ -11,13 +11,20 @@ category-specific extraction and valuation modules.
 
 ## Project status
 
-The project is in product and architecture planning. The first milestone is a
-personal, local web application for the Hartford, Connecticut moped market. A
-user saves a watchlist such as `moped`; the system repeatedly searches enabled
-sources in separate Hartford acquisition and nationwide reference scopes,
-normalizes and deduplicates new listings, ranks local opportunities, and tracks
-their price and availability history. Deterministic calculations—not an LLM
-opinion—combine labeled comparable evidence with total acquisition cost.
+The project foundation is implemented for a personal, local web application.
+The repository contains a Python 3.13 FastAPI service and worker entry point, a
+React and TypeScript frontend, SQLite connection policy, an Alembic migration
+baseline, generated OpenAPI types, test harnesses, and required GitHub Actions
+checks. The first vertical slice reports API and database readiness in the web
+interface.
+
+The next product milestone begins the canonical schema for the Hartford,
+Connecticut moped market. A user will save a watchlist such as `moped`; the
+system will search enabled sources in separate Hartford acquisition and
+nationwide reference scopes, normalize and deduplicate new listings, rank local
+opportunities, and track their price and availability history. Deterministic
+calculations—not an LLM opinion—combine labeled comparable evidence with total
+acquisition cost.
 
 The product will be proven as a personal tool before it is opened to other
 users. Provider-specific access remains behind adapters so public deployment can
@@ -61,11 +68,37 @@ are explicitly adopted.
 
 ## Development
 
+Install Python 3.13, [uv](https://docs.astral.sh/uv/), Node.js 24, and npm 11 or
+12. Then run from the repository root:
+
+```bash
+cp .env.example .env
+make setup
+make migrate
+```
+
+Start the API and frontend in separate terminals:
+
+```bash
+make api
+make frontend-dev
+```
+
+The frontend is available at `http://127.0.0.1:5173` and proxies `/api` to the
+backend at `http://127.0.0.1:8000`. Run the complete local CI equivalent with:
+
+```bash
+make check
+```
+
+Focused commands are `make format`, `make format-check`, `make lint`,
+`make typecheck`, `make test`, `make migration-check`, `make build`, and
+`make contract-check`. Regenerate the checked-in OpenAPI document and frontend
+types with `make generate-api` after changing the API contract.
+
 The selected stack is a Python 3.13 FastAPI backend and worker, a React and
 TypeScript frontend built with Vite, and SQLite persistence through SQLAlchemy
-and Alembic. See `docs/stack.md` for responsibilities and rationale. Exact setup,
-run, test, lint, and formatting commands will be added when the application
-skeleton is created.
+and Alembic. See `docs/stack.md` for responsibilities and rationale.
 
 Development uses short-lived branches with pull requests directly into protected
 `main`, test-driven development for behavioral changes, and required GitHub

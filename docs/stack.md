@@ -45,6 +45,9 @@ interface.
 - Start with ordinary CSS and a small token system. Do not add a component or
   utility-CSS framework until the interface demonstrates a repeated need.
 
+Node.js 24 is the frontend runtime baseline. npm 11 or 12 installs the committed
+lockfile; Python dependencies remain owned by uv.
+
 ## Dependency and quality tooling
 
 - **uv** manages Python, `pyproject.toml`, the virtual environment, and the

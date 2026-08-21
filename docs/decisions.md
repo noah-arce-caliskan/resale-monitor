@@ -322,6 +322,21 @@ requests, and larger review surfaces without providing a separate environment or
 coordination benefit. Small direct pull requests exercise CI on the exact unit
 being merged and keep `main` continuously understandable.
 
+## 2026-08-21: Foundation baseline before domain migrations
+
+**Decision:** Establish Alembic with an explicit empty foundation revision, then
+add the canonical schema through the focused migration pull requests already
+sequenced in `docs/development-workflow.md`. Use Node.js 24 with npm 11 or 12 for
+the frontend runtime and lockfile. Treat the database-aware health endpoint and
+its React consumer as the foundation vertical slice.
+
+**Reason:** A baseline revision proves migration wiring on a fresh SQLite
+database without combining several domain boundaries into an oversized
+foundation review. The health slice exercises the typed path from React through
+FastAPI to SQLite, and the pinned runtime makes local development and CI
+reproducible. This clarifies the earlier data-model wording while preserving its
+schema contract and the existing pull-request sequence.
+
 ## Open decisions
 
 - Future deployment target.

@@ -114,6 +114,12 @@ Add Playwright as a separate required check when the first complete user journey
 exists. Add an OpenAPI generated-client drift check once generation is wired in.
 Keep check names stable after branch protection references them.
 
+The complete local CI equivalent is `make check`. It checks Ruff and Prettier
+formatting, Python and TypeScript linting and types, pytest and Vitest coverage,
+a fresh Alembic upgrade, the production frontend build, and generated OpenAPI
+contract drift. `README.md` and `AGENTS.md` contain the focused setup and run
+commands.
+
 CI must fail on formatting drift rather than rewrite the branch. Cache only
 dependency downloads and safe build inputs; correctness cannot depend on a warm
 cache. Pin third-party GitHub Actions to trusted maintained releases and grant

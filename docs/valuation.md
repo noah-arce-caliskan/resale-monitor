@@ -99,6 +99,15 @@ confidence rules, and final ranking.
 
 ## Version 0.1 calculation contract
 
+### Current implementation status
+
+The fixture-backed MVP implements effective-sample gating, weighted quartiles,
+active-asking confidence caps, conservative cost bounds, advantage thresholds,
+and persisted comparable/cost audit rows. Its first cohort assigns one reviewed
+active-asking weight rather than claiming calibrated similarity, recency, and
+regional models. Regional shrinkage and field-specific weights below remain the
+next calibration step and must be fixture-tested before activation.
+
 This section defines the first implementable baseline. Its constants are
 versioned hypotheses to evaluate, not claims of market truth.
 

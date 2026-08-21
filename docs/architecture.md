@@ -122,6 +122,11 @@ lifecycle behavior.
 
 ## Initial persistence
 
+Local development defaults to a synthetic fixture provider that exercises the
+same canonical ingestion interface without network access or credentials. Live
+mode uses eBay's official OAuth and Browse endpoints. Fixture records are labeled
+in provenance and are never treated as real market evidence.
+
 - Store structured records in SQLite with WAL enabled, foreign keys enforced,
   migrations, and immutable observation rows.
 - Preserve permitted raw API responses or normalized source payloads with their

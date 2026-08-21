@@ -24,6 +24,11 @@ valuation baseline remain before Phase 0 is complete.
 
 ## Phase 1: eBay watchlist thin slice
 
+Core watchlist creation, fixture-backed eBay ingestion, canonical persistence,
+deterministic valuation, and the ranked React feed are implemented on
+`feat/ebay-watchlist-mvp`. Live credential verification, extraction/correction,
+lifecycle refresh, and evaluation calibration remain before Phase 1 is complete.
+
 - Build a personal local web application.
 - Implement Watchlists, Create or Edit Watchlist, Deal Feed, and Listing
   Workspace.

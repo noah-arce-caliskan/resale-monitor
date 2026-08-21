@@ -13,6 +13,13 @@ reproducible analyses.
 
 ## Storage conventions
 
+The first MVP migration establishes the relationship skeleton and fields needed
+by fixture-backed acquisition, observations, market evidence, costs, and
+analysis. Fields in this document that support leases, rejected discoveries,
+user correction provenance, richer lifecycle outcomes, or hosted operation are
+still contractual targets and must be added by migration before their behavior
+ships; application code must not pretend an unimplemented field is persisted.
+
 - Application-generated UUIDs are stored as canonical text primary keys. Public
   APIs never expose sequential database meaning.
 - All timestamps represent UTC and use timezone-aware Python datetimes.

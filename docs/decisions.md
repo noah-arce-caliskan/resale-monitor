@@ -337,6 +337,19 @@ FastAPI to SQLite, and the pinned runtime makes local development and CI
 reproducible. This clarifies the earlier data-model wording while preserving its
 schema contract and the existing pull-request sequence.
 
+## 2026-08-21: Fixture-first eBay MVP with explicit live mode
+
+**Decision:** Make a clearly labeled synthetic eBay fixture provider the default
+local mode while implementing the production adapter against eBay's official
+OAuth client-credentials and Browse API contracts. Live mode is opt-in through
+`SOURCE_MODE=live` and requires uncommitted client credentials. Fixture asks are
+never represented as real market evidence.
+
+**Reason:** The complete watchlist, ingestion, valuation, and UI pipeline must be
+repeatable in tests and for resume reviewers without sharing credentials or
+depending on network availability. Keeping both providers behind one interface
+makes live verification a narrow final step instead of a parallel code path.
+
 ## Open decisions
 
 - Future deployment target.

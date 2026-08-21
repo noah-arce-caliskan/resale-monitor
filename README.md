@@ -11,20 +11,14 @@ category-specific extraction and valuation modules.
 
 ## Project status
 
-The project foundation is implemented for a personal, local web application.
-The repository contains a Python 3.13 FastAPI service and worker entry point, a
-React and TypeScript frontend, SQLite connection policy, an Alembic migration
-baseline, generated OpenAPI types, test harnesses, and required GitHub Actions
-checks. The first vertical slice reports API and database readiness in the web
-interface.
-
-The next product milestone begins the canonical schema for the Hartford,
-Connecticut moped market. A user will save a watchlist such as `moped`; the
-system will search enabled sources in separate Hartford acquisition and
-nationwide reference scopes, normalize and deduplicate new listings, rank local
-opportunities, and track their price and availability history. Deterministic
-calculations—not an LLM opinion—combine labeled comparable evidence with total
-acquisition cost.
+The local MVP now supports creating a Hartford moped watchlist, running separate
+local acquisition and nationwide reference searches, deduplicating immutable
+listing observations, calculating an evidence-backed opportunity range, and
+inspecting the ranked feed in React. Its production adapter uses eBay's official
+OAuth and Browse API contracts; the default local mode uses clearly labeled
+synthetic fixtures so the complete flow remains reproducible without secrets.
+Deterministic calculations—not an LLM opinion—combine labeled comparable
+evidence with total acquisition cost.
 
 The product will be proven as a personal tool before it is opened to other
 users. Provider-specific access remains behind adapters so public deployment can
@@ -83,6 +77,10 @@ Start the API and frontend in separate terminals:
 make api
 make frontend-dev
 ```
+
+`SOURCE_MODE=fixture` is the safe default. To verify live eBay discovery, set
+`SOURCE_MODE=live`, `EBAY_CLIENT_ID`, and `EBAY_CLIENT_SECRET` in the ignored
+`.env` file.
 
 The frontend is available at `http://127.0.0.1:5173` and proxies `/api` to the
 backend at `http://127.0.0.1:8000`. Run the complete local CI equivalent with:

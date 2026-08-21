@@ -2,11 +2,14 @@
 
 ## Purpose
 
-This document is the implementation contract for the first Alembic migration.
-The schema supports one personal user while preserving the histories and
-boundaries required for a later hosted product. It distinguishes raw acquisition,
-canonical listing identity, immutable observations, resolved item versions,
-market evidence, and reproducible analyses.
+This document is the implementation contract for the initial domain migration
+sequence. The foundation establishes an empty Alembic baseline; the focused
+schema pull requests in `docs/development-workflow.md` add these tables in
+reviewable relationship groups. The completed sequence supports one personal
+user while preserving the histories and boundaries required for a later hosted
+product. It distinguishes raw acquisition, canonical listing identity,
+immutable observations, resolved item versions, market evidence, and
+reproducible analyses.
 
 ## Storage conventions
 

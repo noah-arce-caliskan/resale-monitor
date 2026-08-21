@@ -2,6 +2,12 @@
 
 ## Phase 0: Foundation
 
+The product and architecture contract, application skeleton, health vertical
+slice, migration baseline, local quality workflow, and GitHub Actions workflow
+are implemented on `feat/project-foundation`. Branch protection follows the
+first successful CI run. The canonical domain migrations and deterministic
+valuation baseline remain before Phase 0 is complete.
+
 - Define the product vision, MVP, logical architecture, and data policy.
 - Define the four-screen thin-slice contract and end-to-end user journey.
 - Maintain a concise current-state handoff and synchronize material changes into

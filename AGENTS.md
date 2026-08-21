@@ -120,7 +120,18 @@ explicit uncertainty. Mopeds and scooters are the first category.
 
 ## Current commands
 
-The stack is selected, but no application skeleton exists yet. The foundation
-PR must replace this section with exact setup, development, migration, test,
-lint, type-check, format, and build commands that match local development and
-CI.
+- Setup locked environments: `make setup`
+- Run the API: `make api`
+- Run the scheduler worker: `make worker`
+- Run the frontend: `make frontend-dev`
+- Upgrade the local database: `make migrate`
+- Format: `make format`
+- Check formatting: `make format-check`
+- Lint: `make lint`
+- Type-check: `make typecheck`
+- Test with coverage: `make test`
+- Test a fresh migration: `make migration-check`
+- Build the frontend: `make build`
+- Regenerate OpenAPI and TypeScript contracts: `make generate-api`
+- Verify generated contract drift: `make contract-check`
+- Run the complete local CI equivalent: `make check`

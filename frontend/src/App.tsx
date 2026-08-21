@@ -2,10 +2,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FormEvent, useState } from "react";
 import {
   createWatchlist,
+  getListing,
   getWatchlist,
   listWatchlists,
   runWatchlist,
-  type FeedItem,
 } from "./api/watchlists";
 import "./styles.css";
 
@@ -22,12 +22,17 @@ function App() {
   });
   const [selected, setSelected] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
-  const [listing, setListing] = useState<FeedItem | null>(null);
+  const [listingId, setListingId] = useState<string | null>(null);
   const active = selected ?? watches.data?.[0]?.id ?? null;
   const detail = useQuery({
     queryKey: ["watchlist", active],
     queryFn: () => getWatchlist(active!),
     enabled: !!active,
+  });
+  const listing = useQuery({
+    queryKey: ["listing", listingId],
+    queryFn: () => getListing(listingId!),
+    enabled: listingId !== null,
   });
   const create = useMutation({
     mutationFn: createWatchlist,
@@ -106,6 +111,22 @@ function App() {
                 </button>
               </div>
             </section>
+            <section className="health-grid" aria-label="Source health">
+              {detail.data?.source_health.map((source) => (
+                <article
+                  key={source.purpose}
+                  className={`health health--${source.status}`}
+                >
+                  <span>{source.purpose}</span>
+                  <b>{source.status.replace("_", " ")}</b>
+                  <small>
+                    {source.records_seen} records · {source.new_listings} new ·{" "}
+                    {source.changed_listings} changed
+                  </small>
+                  {source.error_detail ? <p>{source.error_detail}</p> : null}
+                </article>
+              ))}
+            </section>
             {detail.data?.feed.length === 0 ? (
               <section className="empty compact">
                 <h3>No listings collected yet</h3>
@@ -117,7 +138,7 @@ function App() {
                 <button
                   className="deal-card"
                   key={item.listing_id}
-                  onClick={() => setListing(item)}
+                  onClick={() => setListingId(item.listing_id)}
                 >
                   {item.image_url ? <img src={item.image_url} alt="" /> : null}
                   <div>
@@ -137,6 +158,29 @@ function App() {
                 </button>
               ))}
             </section>
+            {detail.data?.references.length ? (
+              <details className="references">
+                <summary>
+                  Browse {detail.data.reference_count} reference listings
+                </summary>
+                <div className="reference-list">
+                  {detail.data.references.map((reference) => (
+                    <article key={reference.listing_id}>
+                      <div>
+                        <b>{reference.title}</b>
+                        <small>{reference.location_text}</small>
+                      </div>
+                      <div>
+                        <b>{money(reference.price_minor)}</b>
+                        <small>
+                          {reference.evidence_type.replace("_", " ")}
+                        </small>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </details>
+            ) : null}
           </>
         )}
       </main>
@@ -174,17 +218,117 @@ function App() {
           </form>
         </div>
       ) : null}
-      {listing ? (
+      {listingId ? (
         <div className="dialog-backdrop">
-          <article className="dialog">
+          <article
+            className="dialog listing-workspace"
+            role="dialog"
+            aria-label="Listing evidence"
+          >
             <p className="eyebrow">Evidence workspace</p>
-            <h2>{listing.title}</h2>
-            <p>Confidence {Math.round(listing.confidence_bp / 100)}%</p>
-            <p>
-              This deterministic result uses active asking-price comparisons and
-              a conservative cost reserve. Demo evidence is not a verified sale.
-            </p>
-            <button onClick={() => setListing(null)}>Close</button>
+            {listing.isPending ? <p>Loading listing evidence…</p> : null}
+            {listing.isError ? <p>Listing evidence is unavailable.</p> : null}
+            {listing.data ? (
+              <>
+                <h2>{listing.data.title}</h2>
+                <div className="evidence-metrics">
+                  <div>
+                    <small>Fair value</small>
+                    <b>
+                      {money(listing.data.fair_value_low_minor)}–
+                      {money(listing.data.fair_value_high_minor)}
+                    </b>
+                  </div>
+                  <div>
+                    <small>Total cost</small>
+                    <b>
+                      {money(listing.data.total_cost_low_minor)}–
+                      {money(listing.data.total_cost_high_minor)}
+                    </b>
+                  </div>
+                  <div>
+                    <small>Advantage</small>
+                    <b>{money(listing.data.conservative_advantage_minor)}</b>
+                  </div>
+                  <div>
+                    <small>Confidence</small>
+                    <b>{Math.round(listing.data.confidence_bp / 100)}%</b>
+                  </div>
+                </div>
+                <p>
+                  This deterministic result uses labeled asking-price
+                  comparisons and conservative costs. Demo evidence is not a
+                  verified sale.
+                </p>
+                <section>
+                  <h3>Extracted attributes</h3>
+                  <dl className="attribute-list">
+                    {Object.entries(listing.data.attributes).map(
+                      ([key, value]) => (
+                        <div key={key}>
+                          <dt>{key.replace("_", " ")}</dt>
+                          <dd>{value ?? "Unknown"}</dd>
+                        </div>
+                      ),
+                    )}
+                  </dl>
+                </section>
+                <section>
+                  <h3>Comparable evidence</h3>
+                  <div className="evidence-list">
+                    {listing.data.comparables.map((comparable) => (
+                      <article key={comparable.market_evidence_id}>
+                        <div>
+                          <b>{comparable.title}</b>
+                          <small>
+                            {comparable.evidence_type.replace("_", " ")} ·
+                            weight{" "}
+                            {Math.round(comparable.final_weight_bp / 100)}%
+                          </small>
+                        </div>
+                        <b>{money(comparable.price_minor)}</b>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+                <section>
+                  <h3>Cost assumptions</h3>
+                  {listing.data.costs.map((cost) => (
+                    <p key={cost.kind}>
+                      <b>
+                        {cost.kind.replace("_", " ")}: {money(cost.low_minor)}–
+                        {money(cost.high_minor)}
+                      </b>
+                      <br />
+                      {cost.rationale}
+                    </p>
+                  ))}
+                </section>
+                <section>
+                  <h3>Price and availability history</h3>
+                  <ol className="timeline">
+                    {listing.data.observations.map((observation) => (
+                      <li key={observation.observed_at}>
+                        <b>{money(observation.asking_price_minor)}</b>
+                        <span>
+                          {observation.retrieval_outcome} ·{" "}
+                          {new Date(observation.observed_at).toLocaleString()}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+                <a
+                  className="source-link"
+                  href={listing.data.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open source listing
+                </a>
+              </>
+            ) : null}
+            <button onClick={() => setListingId(null)}>Close</button>
           </article>
         </div>
       ) : null}

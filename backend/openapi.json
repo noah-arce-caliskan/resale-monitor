@@ -1,6 +1,149 @@
 {
   "components": {
     "schemas": {
+      "ComparableRead": {
+        "properties": {
+          "evidence_type": {
+            "title": "Evidence Type",
+            "type": "string"
+          },
+          "final_weight_bp": {
+            "title": "Final Weight Bp",
+            "type": "integer"
+          },
+          "market_evidence_id": {
+            "title": "Market Evidence Id",
+            "type": "string"
+          },
+          "price_minor": {
+            "title": "Price Minor",
+            "type": "integer"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "reason_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Reason Codes",
+            "type": "array"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "market_evidence_id",
+          "title",
+          "price_minor",
+          "evidence_type",
+          "provider",
+          "final_weight_bp",
+          "reason_codes"
+        ],
+        "title": "ComparableRead",
+        "type": "object"
+      },
+      "CostRead": {
+        "properties": {
+          "high_minor": {
+            "title": "High Minor",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "low_minor": {
+            "title": "Low Minor",
+            "type": "integer"
+          },
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "low_minor",
+          "high_minor",
+          "rationale"
+        ],
+        "title": "CostRead",
+        "type": "object"
+      },
+      "FeedItemRead": {
+        "properties": {
+          "asking_price_minor": {
+            "title": "Asking Price Minor",
+            "type": "integer"
+          },
+          "confidence_bp": {
+            "title": "Confidence Bp",
+            "type": "integer"
+          },
+          "conservative_advantage_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conservative Advantage Minor"
+          },
+          "fair_value_low_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fair Value Low Minor"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "listing_id": {
+            "title": "Listing Id",
+            "type": "string"
+          },
+          "opportunity_label": {
+            "title": "Opportunity Label",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "listing_id",
+          "title",
+          "asking_price_minor",
+          "image_url",
+          "opportunity_label",
+          "confidence_bp",
+          "fair_value_low_minor",
+          "conservative_advantage_minor"
+        ],
+        "title": "FeedItemRead",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -12,6 +155,166 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "ListingDetailRead": {
+        "properties": {
+          "attributes": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "title": "Attributes",
+            "type": "object"
+          },
+          "comparables": {
+            "items": {
+              "$ref": "#/components/schemas/ComparableRead"
+            },
+            "title": "Comparables",
+            "type": "array"
+          },
+          "confidence_bp": {
+            "title": "Confidence Bp",
+            "type": "integer"
+          },
+          "conservative_advantage_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conservative Advantage Minor"
+          },
+          "costs": {
+            "items": {
+              "$ref": "#/components/schemas/CostRead"
+            },
+            "title": "Costs",
+            "type": "array"
+          },
+          "fair_value_high_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fair Value High Minor"
+          },
+          "fair_value_low_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fair Value Low Minor"
+          },
+          "fair_value_midpoint_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fair Value Midpoint Minor"
+          },
+          "image_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Image Urls",
+            "type": "array"
+          },
+          "listing_id": {
+            "title": "Listing Id",
+            "type": "string"
+          },
+          "observations": {
+            "items": {
+              "$ref": "#/components/schemas/ObservationRead"
+            },
+            "title": "Observations",
+            "type": "array"
+          },
+          "opportunity_label": {
+            "title": "Opportunity Label",
+            "type": "string"
+          },
+          "provider_status": {
+            "title": "Provider Status",
+            "type": "string"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "total_cost_high_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost High Minor"
+          },
+          "total_cost_low_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Cost Low Minor"
+          }
+        },
+        "required": [
+          "listing_id",
+          "title",
+          "source_url",
+          "provider_status",
+          "image_urls",
+          "attributes",
+          "opportunity_label",
+          "confidence_bp",
+          "fair_value_low_minor",
+          "fair_value_midpoint_minor",
+          "fair_value_high_minor",
+          "total_cost_low_minor",
+          "total_cost_high_minor",
+          "conservative_advantage_minor",
+          "observations",
+          "comparables",
+          "costs"
+        ],
+        "title": "ListingDetailRead",
         "type": "object"
       },
       "LiveResponse": {
@@ -30,6 +333,42 @@
           }
         },
         "title": "LiveResponse",
+        "type": "object"
+      },
+      "ObservationRead": {
+        "properties": {
+          "asking_price_minor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asking Price Minor"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "provider_status": {
+            "title": "Provider Status",
+            "type": "string"
+          },
+          "retrieval_outcome": {
+            "title": "Retrieval Outcome",
+            "type": "string"
+          }
+        },
+        "required": [
+          "observed_at",
+          "retrieval_outcome",
+          "asking_price_minor",
+          "provider_status"
+        ],
+        "title": "ObservationRead",
         "type": "object"
       },
       "ReadinessChecks": {
@@ -66,6 +405,46 @@
           "checks"
         ],
         "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "ReferenceRead": {
+        "properties": {
+          "evidence_type": {
+            "title": "Evidence Type",
+            "type": "string"
+          },
+          "listing_id": {
+            "title": "Listing Id",
+            "type": "string"
+          },
+          "location_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Text"
+          },
+          "price_minor": {
+            "title": "Price Minor",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "listing_id",
+          "title",
+          "price_minor",
+          "location_text",
+          "evidence_type"
+        ],
+        "title": "ReferenceRead",
         "type": "object"
       },
       "SearchScopeRead": {
@@ -106,6 +485,76 @@
           "enabled"
         ],
         "title": "SearchScopeRead",
+        "type": "object"
+      },
+      "SourceHealthRead": {
+        "properties": {
+          "changed_listings": {
+            "title": "Changed Listings",
+            "type": "integer"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "error_detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Detail"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "new_listings": {
+            "title": "New Listings",
+            "type": "integer"
+          },
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "records_seen": {
+            "title": "Records Seen",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "purpose",
+          "status",
+          "records_seen",
+          "new_listings",
+          "changed_listings",
+          "error_code",
+          "error_detail",
+          "finished_at"
+        ],
+        "title": "SourceHealthRead",
         "type": "object"
       },
       "ValidationError": {
@@ -206,6 +655,43 @@
           "radius_miles"
         ],
         "title": "WatchlistCreate",
+        "type": "object"
+      },
+      "WatchlistDetailRead": {
+        "properties": {
+          "feed": {
+            "items": {
+              "$ref": "#/components/schemas/FeedItemRead"
+            },
+            "title": "Feed",
+            "type": "array"
+          },
+          "reference_count": {
+            "title": "Reference Count",
+            "type": "integer"
+          },
+          "references": {
+            "items": {
+              "$ref": "#/components/schemas/ReferenceRead"
+            },
+            "title": "References",
+            "type": "array"
+          },
+          "source_health": {
+            "items": {
+              "$ref": "#/components/schemas/SourceHealthRead"
+            },
+            "title": "Source Health",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reference_count",
+          "source_health",
+          "feed",
+          "references"
+        ],
+        "title": "WatchlistDetailRead",
         "type": "object"
       },
       "WatchlistRead": {
@@ -339,6 +825,48 @@
         ]
       }
     },
+    "/api/listings/{listing_id}": {
+      "get": {
+        "operationId": "detail_api_listings__listing_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "listing_id",
+            "required": true,
+            "schema": {
+              "title": "Listing Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListingDetailRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detail",
+        "tags": [
+          "listings"
+        ]
+      }
+    },
     "/api/watchlists": {
       "get": {
         "operationId": "list_all_api_watchlists_get",
@@ -422,9 +950,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response Detail Api Watchlists  Watchlist Id  Get",
-                  "type": "object"
+                  "$ref": "#/components/schemas/WatchlistDetailRead"
                 }
               }
             },

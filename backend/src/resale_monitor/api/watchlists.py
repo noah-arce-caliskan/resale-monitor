@@ -4,6 +4,7 @@ from typing import cast
 from fastapi import APIRouter, HTTPException, Request, status
 
 from resale_monitor.database import Database
+from resale_monitor.schemas.feed import WatchlistDetailRead
 from resale_monitor.schemas.watchlists import WatchlistCreate, WatchlistRead
 from resale_monitor.services.ingestion import run_watchlist, watchlist_detail
 from resale_monitor.services.watchlists import create_watchlist, list_watchlists
@@ -39,7 +40,10 @@ async def run(watchlist_id: str, request: Request) -> dict[str, int]:
         raise HTTPException(status_code=404, detail=str(error)) from error
 
 
-@router.get("/{watchlist_id}")
-def detail(watchlist_id: str, request: Request) -> dict[str, object]:
-    with _database(request).session() as session:
-        return watchlist_detail(session, watchlist_id)
+@router.get("/{watchlist_id}", response_model=WatchlistDetailRead)
+def detail(watchlist_id: str, request: Request) -> WatchlistDetailRead:
+    try:
+        with _database(request).session() as session:
+            return watchlist_detail(session, watchlist_id)
+    except LookupError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error

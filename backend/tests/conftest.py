@@ -2,6 +2,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 
 import pytest
+from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from resale_monitor.config import Settings
@@ -20,9 +21,14 @@ def anyio_backend() -> str:
 
 
 @pytest.fixture
-async def client(database_url: str) -> AsyncIterator[AsyncClient]:
+def app(database_url: str) -> FastAPI:
     app = create_app(Settings(database_url=database_url))
     metadata.create_all(app.state.database.engine)
+    return app
+
+
+@pytest.fixture
+async def client(app: FastAPI) -> AsyncIterator[AsyncClient]:
     transport = ASGITransport(app=app)
 
     async with (

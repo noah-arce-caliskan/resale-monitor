@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/listings/{listing_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detail */
+        get: operations["detail_api_listings__listing_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/watchlists": {
         parameters: {
             query?: never;
@@ -94,10 +111,96 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ComparableRead */
+        ComparableRead: {
+            /** Evidence Type */
+            evidence_type: string;
+            /** Final Weight Bp */
+            final_weight_bp: number;
+            /** Market Evidence Id */
+            market_evidence_id: string;
+            /** Price Minor */
+            price_minor: number;
+            /** Provider */
+            provider: string;
+            /** Reason Codes */
+            reason_codes: string[];
+            /** Title */
+            title: string;
+        };
+        /** CostRead */
+        CostRead: {
+            /** High Minor */
+            high_minor: number;
+            /** Kind */
+            kind: string;
+            /** Low Minor */
+            low_minor: number;
+            /** Rationale */
+            rationale: string;
+        };
+        /** FeedItemRead */
+        FeedItemRead: {
+            /** Asking Price Minor */
+            asking_price_minor: number;
+            /** Confidence Bp */
+            confidence_bp: number;
+            /** Conservative Advantage Minor */
+            conservative_advantage_minor: number | null;
+            /** Fair Value Low Minor */
+            fair_value_low_minor: number | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Listing Id */
+            listing_id: string;
+            /** Opportunity Label */
+            opportunity_label: string;
+            /** Title */
+            title: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** ListingDetailRead */
+        ListingDetailRead: {
+            /** Attributes */
+            attributes: {
+                [key: string]: string | number | null;
+            };
+            /** Comparables */
+            comparables: components["schemas"]["ComparableRead"][];
+            /** Confidence Bp */
+            confidence_bp: number;
+            /** Conservative Advantage Minor */
+            conservative_advantage_minor: number | null;
+            /** Costs */
+            costs: components["schemas"]["CostRead"][];
+            /** Fair Value High Minor */
+            fair_value_high_minor: number | null;
+            /** Fair Value Low Minor */
+            fair_value_low_minor: number | null;
+            /** Fair Value Midpoint Minor */
+            fair_value_midpoint_minor: number | null;
+            /** Image Urls */
+            image_urls: string[];
+            /** Listing Id */
+            listing_id: string;
+            /** Observations */
+            observations: components["schemas"]["ObservationRead"][];
+            /** Opportunity Label */
+            opportunity_label: string;
+            /** Provider Status */
+            provider_status: string;
+            /** Source Url */
+            source_url: string;
+            /** Title */
+            title: string;
+            /** Total Cost High Minor */
+            total_cost_high_minor: number | null;
+            /** Total Cost Low Minor */
+            total_cost_low_minor: number | null;
         };
         /** LiveResponse */
         LiveResponse: {
@@ -113,6 +216,20 @@ export interface components {
              * @constant
              */
             status: "ok";
+        };
+        /** ObservationRead */
+        ObservationRead: {
+            /** Asking Price Minor */
+            asking_price_minor: number | null;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /** Provider Status */
+            provider_status: string;
+            /** Retrieval Outcome */
+            retrieval_outcome: string;
         };
         /** ReadinessChecks */
         ReadinessChecks: {
@@ -139,6 +256,19 @@ export interface components {
              */
             status: "ok";
         };
+        /** ReferenceRead */
+        ReferenceRead: {
+            /** Evidence Type */
+            evidence_type: string;
+            /** Listing Id */
+            listing_id: string;
+            /** Location Text */
+            location_text: string | null;
+            /** Price Minor */
+            price_minor: number;
+            /** Title */
+            title: string;
+        };
         /** SearchScopeRead */
         SearchScopeRead: {
             /** Enabled */
@@ -157,6 +287,25 @@ export interface components {
             query: {
                 [key: string]: unknown;
             };
+        };
+        /** SourceHealthRead */
+        SourceHealthRead: {
+            /** Changed Listings */
+            changed_listings: number;
+            /** Error Code */
+            error_code: string | null;
+            /** Error Detail */
+            error_detail: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /** New Listings */
+            new_listings: number;
+            /** Purpose */
+            purpose: string;
+            /** Records Seen */
+            records_seen: number;
+            /** Status */
+            status: string;
         };
         /** ValidationError */
         ValidationError: {
@@ -185,6 +334,17 @@ export interface components {
             query: string;
             /** Radius Miles */
             radius_miles: number;
+        };
+        /** WatchlistDetailRead */
+        WatchlistDetailRead: {
+            /** Feed */
+            feed: components["schemas"]["FeedItemRead"][];
+            /** Reference Count */
+            reference_count: number;
+            /** References */
+            references: components["schemas"]["ReferenceRead"][];
+            /** Source Health */
+            source_health: components["schemas"]["SourceHealthRead"][];
         };
         /** WatchlistRead */
         WatchlistRead: {
@@ -263,6 +423,37 @@ export interface operations {
             };
         };
     };
+    detail_api_listings__listing_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listing_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingDetailRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_all_api_watchlists_get: {
         parameters: {
             query?: never;
@@ -333,9 +524,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["WatchlistDetailRead"];
                 };
             };
             /** @description Validation Error */

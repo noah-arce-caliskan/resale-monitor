@@ -1,9 +1,9 @@
 import hashlib
 import json
 from dataclasses import asdict, dataclass
-from typing import Protocol, cast
+from typing import Protocol
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from resale_monitor.models import (
@@ -24,7 +24,21 @@ from resale_monitor.models import (
     WatchlistListing,
     utc_now,
 )
-from resale_monitor.providers.ebay import ProviderListing
+from resale_monitor.providers.ebay import (
+    ProviderError,
+    ProviderListing,
+    ProviderRateLimitError,
+)
+from resale_monitor.schemas.feed import (
+    ComparableRead,
+    CostRead,
+    FeedItemRead,
+    ListingDetailRead,
+    ObservationRead,
+    ReferenceRead,
+    SourceHealthRead,
+    WatchlistDetailRead,
+)
 from resale_monitor.valuation import ComparableInput, ValuationInput, valuate
 
 
@@ -57,42 +71,68 @@ async def run_watchlist(
         ).all()
     )
     totals = RunSummary(0, 0, 0)
+    succeeded = False
     for scope in scopes:
-        found = await provider.search(
-            query=str(scope.query_json["keywords"]),
-            purpose=scope.purpose,
-            radius_miles=round(watchlist.radius_meters / 1609),
-        )
-        summary = _ingest_scope(session, watchlist, scope, found)
+        run = _start_run(session, scope)
+        try:
+            found = await provider.search(
+                query=str(scope.query_json["keywords"]),
+                purpose=scope.purpose,
+                radius_miles=round(watchlist.radius_meters / 1609),
+            )
+        except ProviderRateLimitError as error:
+            run.status = "rate_limited"
+            run.finished_at = utc_now()
+            run.error_code = "provider_rate_limited"
+            run.error_detail = (
+                f"Retry after {error.retry_after_seconds} seconds."
+                if error.retry_after_seconds is not None
+                else "Retry later."
+            )
+            continue
+        except ProviderError:
+            run.status = "failed"
+            run.finished_at = utc_now()
+            run.error_code = "provider_error"
+            run.error_detail = "The provider request failed."
+            continue
+        summary = _ingest_scope(session, watchlist, scope, run, found)
+        succeeded = True
         totals = RunSummary(
             totals.records_seen + summary.records_seen,
             totals.new_listings + summary.new_listings,
             totals.changed_listings + summary.changed_listings,
         )
     _analyze_acquisition_feed(session, watchlist_id)
-    watchlist.last_successful_run_at = utc_now()
+    if succeeded:
+        watchlist.last_successful_run_at = utc_now()
     return totals
 
 
-def _ingest_scope(
-    session: Session,
-    watchlist: Watchlist,
-    scope: SearchScope,
-    found: list[ProviderListing],
-) -> RunSummary:
-    now = utc_now()
-    fingerprint = _hash({"scope": scope.id, "query": scope.query_json})
+def _start_run(session: Session, scope: SearchScope) -> SourceRun:
     run = SourceRun(
         search_scope_id=scope.id,
         provider="ebay",
         purpose=scope.purpose,
         status="running",
         adapter_version=scope.adapter_version,
-        request_fingerprint=fingerprint,
-        started_at=now,
+        request_fingerprint=_hash({"scope": scope.id, "query": scope.query_json}),
+        started_at=utc_now(),
     )
     session.add(run)
     session.flush()
+    scope.last_started_at = run.started_at
+    return run
+
+
+def _ingest_scope(
+    session: Session,
+    watchlist: Watchlist,
+    scope: SearchScope,
+    run: SourceRun,
+    found: list[ProviderListing],
+) -> RunSummary:
+    now = utc_now()
     new_count = 0
     changed_count = 0
     for item in found:
@@ -169,7 +209,16 @@ def _ingest_scope(
                 .order_by(ListingObservation.observed_at.desc())
             )
             assert latest_observation is not None
-            natural = f"ebay:{item.provider_listing_id}:{content_hash}"
+            natural = ":".join(
+                [
+                    "ebay",
+                    item.provider_listing_id,
+                    "active_asking",
+                    str(item.asking_price_minor),
+                    str(item.shipping_price_minor),
+                    item.currency,
+                ]
+            )
             exists = session.scalar(
                 select(MarketEvidence.id).where(
                     MarketEvidence.natural_fingerprint == natural
@@ -186,7 +235,10 @@ def _ingest_scope(
                         currency=item.currency,
                         location_text=item.location_text,
                         observed_at=latest_observation.observed_at,
-                        provenance_json={"fixture": item.payload.get("fixture", False)},
+                        provenance_json={
+                            "fixture": item.payload.get("fixture", False),
+                            "provider_listing_id": item.provider_listing_id,
+                        },
                         natural_fingerprint=natural,
                     )
                 )
@@ -249,7 +301,15 @@ def _add_image(
         select(ImageAsset).where(ImageAsset.original_url == item.image_url)
     )
     if image is None:
-        image = ImageAsset(original_url=item.image_url)
+        local_fixture = item.image_url.startswith("/")
+        image = ImageAsset(
+            original_url=item.image_url,
+            local_relative_path=item.image_url.removeprefix("/")
+            if local_fixture
+            else None,
+            display_strategy="local" if local_fixture else "remote",
+            retention_status="bundled_fixture" if local_fixture else "not_retained",
+        )
         session.add(image)
         session.flush()
     session.add(
@@ -263,7 +323,8 @@ def _add_image(
 
 
 def _analyze_acquisition_feed(session: Session, watchlist_id: str) -> None:
-    comparables = list(session.scalars(select(MarketEvidence)).all())
+    comparables = _unique_market_evidence(session, watchlist_id)
+    evidence_fingerprint = _hash([item.id for item in comparables])
     comparable_inputs = [
         ComparableInput(
             price_minor=item.price_minor + item.shipping_minor, weight_bp=4500
@@ -283,11 +344,20 @@ def _analyze_acquisition_feed(session: Session, watchlist_id: str) -> None:
             .order_by(ListingObservation.observed_at.desc())
         )
         assert observation is not None
-        existing = session.scalar(
+        candidates = session.scalars(
             select(Analysis).where(
                 Analysis.listing_id == projection.listing_id,
                 Analysis.candidate_observation_id == observation.id,
             )
+        ).all()
+        existing = next(
+            (
+                item
+                for item in candidates
+                if item.evidence_summary_json.get("evidence_fingerprint")
+                == evidence_fingerprint
+            ),
+            None,
         )
         if existing is not None:
             projection.latest_analysis_id = existing.id
@@ -318,7 +388,10 @@ def _analyze_acquisition_feed(session: Session, watchlist_id: str) -> None:
             conservative_advantage_minor=result.conservative_advantage_minor,
             confidence_bp=result.confidence_bp,
             opportunity_label=result.opportunity_label,
-            evidence_summary_json={"comparable_count": len(comparables)},
+            evidence_summary_json={
+                "comparable_count": len(comparables),
+                "evidence_fingerprint": evidence_fingerprint,
+            },
             risk_summary_json={},
         )
         session.add(analysis)
@@ -352,68 +425,334 @@ def _analyze_acquisition_feed(session: Session, watchlist_id: str) -> None:
         )
 
 
-def watchlist_detail(session: Session, watchlist_id: str) -> dict[str, object]:
-    reference_count = session.scalar(
-        select(func.count())
-        .select_from(WatchlistListing)
+def watchlist_detail(session: Session, watchlist_id: str) -> WatchlistDetailRead:
+    if session.get(Watchlist, watchlist_id) is None:
+        raise LookupError("watchlist not found")
+    scopes = session.scalars(
+        select(SearchScope).where(SearchScope.watchlist_id == watchlist_id)
+    ).all()
+    health: list[SourceHealthRead] = []
+    for scope in scopes:
+        run = session.scalar(
+            select(SourceRun)
+            .where(SourceRun.search_scope_id == scope.id)
+            .order_by(SourceRun.queued_at.desc())
+        )
+        health.append(
+            SourceHealthRead(
+                purpose=scope.purpose,
+                status=run.status if run else "never_run",
+                records_seen=run.records_seen if run else 0,
+                new_listings=run.new_listings if run else 0,
+                changed_listings=run.changed_listings if run else 0,
+                error_code=run.error_code if run else None,
+                error_detail=run.error_detail if run else None,
+                finished_at=run.finished_at if run else None,
+            )
+        )
+    projections = session.scalars(
+        select(WatchlistListing).where(WatchlistListing.watchlist_id == watchlist_id)
+    ).all()
+    feed: list[FeedItemRead] = []
+    references: list[ReferenceRead] = []
+    for projection in projections:
+        observation = _latest_observation(session, projection.listing_id)
+        if observation is None:
+            continue
+        if projection.role == "reference":
+            evidence = session.scalar(
+                select(MarketEvidence)
+                .join(
+                    ListingObservation,
+                    ListingObservation.id == MarketEvidence.listing_observation_id,
+                )
+                .where(ListingObservation.listing_id == projection.listing_id)
+                .order_by(MarketEvidence.observed_at.desc())
+            )
+            if evidence:
+                references.append(
+                    ReferenceRead(
+                        listing_id=projection.listing_id,
+                        title=observation.title or "Untitled listing",
+                        price_minor=evidence.price_minor + evidence.shipping_minor,
+                        location_text=evidence.location_text,
+                        evidence_type=evidence.evidence_type,
+                    )
+                )
+            continue
+        analysis = (
+            session.get(Analysis, projection.latest_analysis_id)
+            if projection.latest_analysis_id
+            else None
+        )
+        image_url = session.scalar(
+            select(ImageAsset.original_url)
+            .join(ObservationImage, ObservationImage.image_asset_id == ImageAsset.id)
+            .where(ObservationImage.observation_id == observation.id)
+        )
+        feed.append(
+            FeedItemRead(
+                listing_id=projection.listing_id,
+                title=observation.title or "Untitled listing",
+                asking_price_minor=observation.asking_price_minor or 0,
+                image_url=image_url,
+                opportunity_label=analysis.opportunity_label if analysis else "pending",
+                confidence_bp=analysis.confidence_bp if analysis else 0,
+                fair_value_low_minor=analysis.fair_value_low_minor
+                if analysis
+                else None,
+                conservative_advantage_minor=(
+                    analysis.conservative_advantage_minor if analysis else None
+                ),
+            )
+        )
+    feed.sort(key=lambda item: item.conservative_advantage_minor or -1, reverse=True)
+    return WatchlistDetailRead(
+        reference_count=len(references),
+        source_health=sorted(health, key=lambda item: item.purpose),
+        feed=feed,
+        references=references,
+    )
+
+
+def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
+    listing = session.get(Listing, listing_id)
+    source = session.scalar(
+        select(ListingSource).where(ListingSource.listing_id == listing_id)
+    )
+    observations = list(
+        session.scalars(
+            select(ListingObservation)
+            .where(ListingObservation.listing_id == listing_id)
+            .order_by(ListingObservation.observed_at.desc())
+        ).all()
+    )
+    if listing is None or source is None or not observations:
+        raise LookupError("listing not found")
+    current = observations[0]
+    version = session.scalar(
+        select(ItemVersion)
+        .where(ItemVersion.listing_id == listing_id)
+        .order_by(ItemVersion.created_at.desc())
+    )
+    analysis = session.scalar(
+        select(Analysis)
+        .where(Analysis.listing_id == listing_id)
+        .order_by(Analysis.created_at.desc())
+    )
+    image_urls = list(
+        session.scalars(
+            select(ImageAsset.original_url)
+            .join(ObservationImage, ObservationImage.image_asset_id == ImageAsset.id)
+            .where(
+                ObservationImage.observation_id.in_([item.id for item in observations])
+            )
+            .distinct()
+        ).all()
+    )
+    comparables: list[ComparableRead] = []
+    costs: list[CostRead] = []
+    if analysis:
+        audits = session.scalars(
+            select(AnalysisComparable)
+            .where(AnalysisComparable.analysis_id == analysis.id)
+            .order_by(AnalysisComparable.rank)
+        ).all()
+        for audit in audits:
+            evidence = session.get_one(MarketEvidence, audit.market_evidence_id)
+            comparable_observation = (
+                session.get(ListingObservation, evidence.listing_observation_id)
+                if evidence.listing_observation_id
+                else None
+            )
+            comparables.append(
+                ComparableRead(
+                    market_evidence_id=evidence.id,
+                    title=(
+                        comparable_observation.title
+                        if comparable_observation and comparable_observation.title
+                        else "Comparable evidence"
+                    ),
+                    price_minor=evidence.price_minor + evidence.shipping_minor,
+                    evidence_type=evidence.evidence_type,
+                    provider=evidence.provider,
+                    final_weight_bp=audit.final_weight_bp,
+                    reason_codes=audit.reason_codes_json,
+                )
+            )
+        costs = [
+            CostRead(
+                kind=item.cost_kind,
+                low_minor=item.low_minor,
+                high_minor=item.high_minor,
+                rationale=item.rationale,
+            )
+            for item in session.scalars(
+                select(AnalysisCost).where(AnalysisCost.analysis_id == analysis.id)
+            ).all()
+        ]
+    return ListingDetailRead(
+        listing_id=listing_id,
+        title=current.title or "Untitled listing",
+        source_url=source.canonical_url,
+        provider_status=source.current_provider_status,
+        image_urls=image_urls,
+        attributes={
+            "make": version.make if version else None,
+            "model": version.model if version else None,
+            "model_year": version.model_year if version else None,
+            "displacement_cc": version.displacement_cc if version else None,
+            "condition": version.normalized_condition if version else None,
+        },
+        opportunity_label=analysis.opportunity_label if analysis else "pending",
+        confidence_bp=analysis.confidence_bp if analysis else 0,
+        fair_value_low_minor=analysis.fair_value_low_minor if analysis else None,
+        fair_value_midpoint_minor=analysis.fair_value_midpoint_minor
+        if analysis
+        else None,
+        fair_value_high_minor=analysis.fair_value_high_minor if analysis else None,
+        total_cost_low_minor=analysis.total_cost_low_minor if analysis else None,
+        total_cost_high_minor=analysis.total_cost_high_minor if analysis else None,
+        conservative_advantage_minor=(
+            analysis.conservative_advantage_minor if analysis else None
+        ),
+        observations=[
+            ObservationRead(
+                observed_at=item.observed_at,
+                retrieval_outcome=item.retrieval_outcome,
+                asking_price_minor=item.asking_price_minor,
+                provider_status=item.provider_status,
+            )
+            for item in observations
+        ],
+        comparables=comparables,
+        costs=costs,
+    )
+
+
+def _latest_observation(session: Session, listing_id: str) -> ListingObservation | None:
+    return session.scalar(
+        select(ListingObservation)
+        .where(ListingObservation.listing_id == listing_id)
+        .order_by(ListingObservation.observed_at.desc())
+    )
+
+
+def _unique_market_evidence(
+    session: Session, watchlist_id: str
+) -> list[MarketEvidence]:
+    evidence_rows = session.scalars(
+        select(MarketEvidence)
+        .join(
+            ListingObservation,
+            ListingObservation.id == MarketEvidence.listing_observation_id,
+        )
+        .join(
+            WatchlistListing,
+            WatchlistListing.listing_id == ListingObservation.listing_id,
+        )
         .where(
             WatchlistListing.watchlist_id == watchlist_id,
             WatchlistListing.role == "reference",
         )
-    )
-    rows = session.scalars(
-        select(WatchlistListing).where(
-            WatchlistListing.watchlist_id == watchlist_id,
-            WatchlistListing.role == "acquisition",
-        )
+        .order_by(MarketEvidence.observed_at.desc())
     ).all()
-    feed: list[dict[str, object]] = []
-    for row in rows:
-        observation = session.scalar(
-            select(ListingObservation)
-            .where(ListingObservation.listing_id == row.listing_id)
-            .order_by(ListingObservation.observed_at.desc())
-        )
-        analysis = (
-            session.get(Analysis, row.latest_analysis_id)
-            if row.latest_analysis_id
-            else None
-        )
-        image_url = (
-            session.scalar(
-                select(ImageAsset.original_url)
-                .join(
-                    ObservationImage, ObservationImage.image_asset_id == ImageAsset.id
-                )
-                .where(ObservationImage.observation_id == observation.id)
+    unique: dict[tuple[str, str, str], MarketEvidence] = {}
+    for evidence in evidence_rows:
+        provider_listing_id = evidence.provenance_json.get("provider_listing_id")
+        if not provider_listing_id and evidence.listing_observation_id:
+            observation = session.get(
+                ListingObservation, evidence.listing_observation_id
             )
-            if observation
-            else None
-        )
-        if observation:
-            feed.append(
-                {
-                    "listing_id": row.listing_id,
-                    "title": observation.title,
-                    "asking_price_minor": observation.asking_price_minor,
-                    "image_url": image_url,
-                    "opportunity_label": analysis.opportunity_label
-                    if analysis
-                    else "pending",
-                    "confidence_bp": analysis.confidence_bp if analysis else 0,
-                    "fair_value_low_minor": analysis.fair_value_low_minor
-                    if analysis
-                    else None,
-                    "conservative_advantage_minor": (
-                        analysis.conservative_advantage_minor if analysis else None
-                    ),
-                }
+            source = (
+                session.get(ListingSource, observation.listing_source_id)
+                if observation
+                else None
             )
-    feed.sort(
-        key=lambda item: cast(int | None, item["conservative_advantage_minor"]) or -1,
-        reverse=True,
+            provider_listing_id = source.provider_listing_id if source else evidence.id
+        key = (
+            evidence.provider,
+            str(provider_listing_id or evidence.id),
+            evidence.evidence_type,
+        )
+        unique.setdefault(key, evidence)
+    return list(unique.values())
+
+
+def record_retrieval_outcome(
+    session: Session, listing_id: str, retrieval_outcome: str
+) -> ListingObservation:
+    allowed = {
+        "available",
+        "explicitly_sold",
+        "explicitly_ended",
+        "missing",
+        "blocked",
+        "error",
+    }
+    if retrieval_outcome not in allowed:
+        raise ValueError("unsupported retrieval outcome")
+    listing = session.get(Listing, listing_id)
+    source = session.scalar(
+        select(ListingSource).where(ListingSource.listing_id == listing_id)
     )
-    return {"reference_count": reference_count or 0, "feed": feed}
+    previous = _latest_observation(session, listing_id)
+    if listing is None or source is None or previous is None:
+        raise LookupError("listing not found")
+    now = utc_now()
+    provider_status = {
+        "available": "available",
+        "explicitly_sold": "sold",
+        "explicitly_ended": "ended",
+        "missing": "unavailable_unknown",
+        "blocked": "unknown",
+        "error": "unknown",
+    }[retrieval_outcome]
+    observation = ListingObservation(
+        listing_id=listing_id,
+        listing_source_id=source.id,
+        observed_at=now,
+        retrieval_outcome=retrieval_outcome,
+        title=previous.title,
+        description=previous.description,
+        location_text=previous.location_text,
+        asking_price_minor=previous.asking_price_minor,
+        shipping_price_minor=previous.shipping_price_minor,
+        currency=previous.currency,
+        provider_status=provider_status,
+        content_hash=_hash(
+            {
+                "previous": previous.content_hash,
+                "outcome": retrieval_outcome,
+                "observed_at": now.isoformat(),
+            }
+        ),
+    )
+    session.add(observation)
+    source.last_checked_at = now
+    source.current_provider_status = provider_status
+    if retrieval_outcome == "missing":
+        if source.first_missing_at is None:
+            source.first_missing_at = now
+        listing.current_status = "unavailable_unknown"
+        listing.status_confidence_bp = 5000
+    elif retrieval_outcome == "explicitly_sold":
+        listing.current_status = "sold"
+        listing.status_confidence_bp = 10000
+    elif retrieval_outcome == "explicitly_ended":
+        listing.current_status = "ended"
+        listing.status_confidence_bp = 10000
+    elif retrieval_outcome == "available":
+        source.first_missing_at = None
+        source.last_seen_at = now
+        listing.last_seen_at = now
+        listing.current_status = "available"
+        listing.status_confidence_bp = 10000
+    else:
+        listing.current_status = "unknown"
+        listing.status_confidence_bp = 0
+    session.flush()
+    return observation
 
 
 def _hash(value: object) -> str:

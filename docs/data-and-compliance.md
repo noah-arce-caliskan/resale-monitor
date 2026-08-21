@@ -88,6 +88,9 @@ Reference: <https://www.edp.ebay.com/api-docs/buy/marketplace-insights/static/ov
 
 - Store the minimum source content needed to reproduce an analysis.
 - Avoid storing seller names, profile photos, contact information, or messages.
+- Official eBay records are reduced to an allowlist of listing, price, condition,
+  category, timing, location-region, and image evidence before persistence;
+  seller identity and postal codes are not retained.
 - Strip personal information from fixtures and evaluation examples.
 - Record acquisition method, source, timestamp, and price type.
 - Do not train models on collected content without separate rights and review.
@@ -101,6 +104,9 @@ Reference: <https://www.edp.ebay.com/api-docs/buy/marketplace-insights/static/ov
 - Display an approved remote URL when it is HTTPS, contains no credentials or
   session tokens, comes from a reviewed source, and is expected to remain
   available.
+- The current eBay adapter accepts listing links only from HTTPS eBay domains
+  and remote images only from reviewed HTTPS `ebayimg.com` or `ebaystatic.com`
+  hosts. It discards unexpected hosts; bundled fixture images remain local.
 - Otherwise retain a private local copy when the image is user-supplied or the
   source permits retention. Store its content hash, source, acquisition time,
   media type, and retention status.

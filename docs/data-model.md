@@ -232,6 +232,11 @@ supported outcome, or an external guide record.
 - `provenance_json`, `natural_fingerprint`, and `created_at`.
 - Unique non-null natural fingerprints prevent the same source fact from being
   counted repeatedly. Model-generated prices never enter this table.
+- For active eBay asks, the natural fact identity includes provider listing ID,
+  price, shipping, and currency—not cosmetic text or image hashes. Analyses also
+  use only the latest fact per provider identity within that watchlist, so
+  display-only or price changes cannot multiply a comparable's weight. Older
+  facts remain immutable history.
 
 ### `outcome_evidence`
 
@@ -306,6 +311,8 @@ show a need beyond these access paths.
    unseen records disappeared.
 5. One missing refresh does not imply sold. Explicit source status or separately
    supported outcome evidence is required.
+   Missing and later recovery checks append observations and update current
+   confidence while preserving both events in history.
 6. User corrections create new versions and outrank later automated extraction
    until the user changes or withdraws them.
 

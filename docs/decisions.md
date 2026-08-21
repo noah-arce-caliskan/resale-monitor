@@ -350,6 +350,18 @@ repeatable in tests and for resume reviewers without sharing credentials or
 depending on network availability. Keeping both providers behind one interface
 makes live verification a narrow final step instead of a parallel code path.
 
+## 2026-08-21: One vertical MVP supersedes the staged domain PR sequence
+
+**Decision:** Deliver the watchlist schema, immutable observations, evidence,
+valuation, official eBay adapter, and React journey as one coherent MVP pull
+request with separate checkpoint commits. This supersedes the earlier planned
+sequence of five domain pull requests but not the direct-to-main or CI rules.
+
+**Reason:** The project owner explicitly chose one larger autonomous goal followed
+by cleanup. A credential-independent vertical slice provides stronger product
+feedback than separately merged tables, while checkpoint commits retain useful
+review and rollback boundaries.
+
 ## Open decisions
 
 - Future deployment target.

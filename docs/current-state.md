@@ -25,12 +25,17 @@ and GitHub Actions CI.
   normalization, sanitized errors, and contract tests.
 - Clearly labeled synthetic fixture mode as the default local experience;
   `SOURCE_MODE=live` requires eBay client credentials.
-- Idempotent provider ingestion, immutable changed observations, active-asking
-  market evidence, and persisted deterministic analyses.
-- React watchlist creation, source run, ranked feed, and evidence workspace.
+- Idempotent provider ingestion, durable rate-limit/source health, immutable
+  changed and missing/recovered observations, deduplicated active-asking market
+  evidence, and persisted deterministic analyses that refresh when a watchlist's
+  reference facts change.
+- React watchlist creation, source health, ranked acquisition feed, expandable
+  reference inventory, and listing workspace with attributes, ranges, costs,
+  five auditable comparables, images, source link, and observation history.
 
-Backend and frontend coverage remain above 90%. The flow has been verified in a
-real browser from watchlist creation through ranked listing inspection.
+Backend and frontend coverage remain above 90%. The flow has been verified from
+a fresh migration in desktop and 390-pixel mobile browser layouts without
+console errors or horizontal overflow.
 
 ## Known boundary
 

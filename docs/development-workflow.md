@@ -146,21 +146,13 @@ secrets, migrations, rollback, artifact promotion, and deployment approvals.
 CI should be established now without pretending that a GitHub workflow is a
 deployment strategy.
 
-## Initial pull-request sequence
+## Delivered milestones and next pull requests
 
-1. `feat/project-foundation`: backend and frontend skeletons, dependency locks,
-   health checks, test harnesses, Alembic infrastructure, and CI.
-2. `feat/watchlist-source-schema`: watchlists, search scopes, source runs, and
-   their tests and migration.
-3. `feat/listing-observation-schema`: listings, provider identities,
-   observations, images, and lifecycle tests.
-4. `feat/evidence-analysis-schema`: item versions, evidence, comparables, costs,
-   and analysis persistence.
-5. `feat/valuation-baseline`: the deterministic version 0.1 contract developed
-   test-first.
-6. `feat/ebay-discovery`: official eBay acquisition and reference searches using
-   fixture-first adapter tests.
-
-The sequence is a planning baseline. Split a pull request further if its review
-surface becomes too large; do not combine unrelated outcomes to preserve the
-numbering.
+1. `feat/project-foundation` delivered the backend/frontend skeleton, health
+   slice, migrations, locked environments, test harnesses, and CI.
+2. `feat/ebay-watchlist-mvp` combines the previously planned schema, observation,
+   evidence, valuation, and eBay-discovery slices into one user-requested vertical
+   milestone. Its checkpoint commits preserve those review boundaries.
+3. The next pull request should be narrow: live eBay credential verification and
+   adapter corrections only, or extraction/evaluation work after live evidence is
+   reviewed. Do not add another marketplace in either change.

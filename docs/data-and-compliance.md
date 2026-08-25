@@ -78,11 +78,22 @@ Use official APIs and their licenses for supported inventory discovery. Historic
 sold-item access through Marketplace Insights is limited release and must not be
 assumed available.
 
+Production Buy API access can require eBay's Application Growth Check. That
+review explicitly scrutinizes collection of eBay statistics and derived average
+selling prices. Before live activation, disclose the personal listing-discovery
+and active-asking-comparison use case and confirm that eBay permits the intended
+storage, comparison, and display. If it does not, restrict eBay to permitted
+listing discovery and obtain valuation evidence from a licensed source or
+user-controlled records instead of working around the restriction.
+
 Seller Hub Product Research may be used as a manual validation aid when the user
 has access, but it is not an assumed programmatic source. Nationwide active eBay
 records remain asking-price evidence and must be labeled accordingly.
 
-Reference: <https://www.edp.ebay.com/api-docs/buy/marketplace-insights/static/overview.html>
+References:
+<https://www.edp.ebay.com/api-docs/buy/marketplace-insights/static/overview.html>
+and
+<https://developer.ebay.com/api-docs/static/gs_request-an-application-growth.html>
 
 ## Data handling rules
 

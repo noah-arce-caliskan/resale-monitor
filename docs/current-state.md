@@ -47,7 +47,9 @@ console errors or horizontal overflow.
 
 Fixtures prove the local pipeline but are not market evidence. Live eBay
 verification is waiting on the owner's eBay developer-account approval and
-production credentials. Model-assisted
+production credentials. Production activation also requires confirming during
+eBay's review that the intended active-asking comparison and retention behavior
+is permitted; keys alone are not treated as authorization. Model-assisted
 extraction, user correction, lifecycle refresh, completed-sale evidence,
 notifications, deployment, and additional marketplaces remain deferred.
 

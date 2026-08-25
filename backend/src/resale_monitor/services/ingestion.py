@@ -1,7 +1,7 @@
 import hashlib
 import json
 from dataclasses import asdict, dataclass
-from typing import Protocol
+from typing import Literal, Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -425,7 +425,9 @@ def _analyze_acquisition_feed(session: Session, watchlist_id: str) -> None:
         )
 
 
-def watchlist_detail(session: Session, watchlist_id: str) -> WatchlistDetailRead:
+def watchlist_detail(
+    session: Session, watchlist_id: str, data_mode: Literal["fixture", "live"]
+) -> WatchlistDetailRead:
     if session.get(Watchlist, watchlist_id) is None:
         raise LookupError("watchlist not found")
     scopes = session.scalars(
@@ -508,6 +510,7 @@ def watchlist_detail(session: Session, watchlist_id: str) -> WatchlistDetailRead
         )
     feed.sort(key=lambda item: item.conservative_advantage_minor or -1, reverse=True)
     return WatchlistDetailRead(
+        data_mode=data_mode,
         reference_count=len(references),
         source_health=sorted(health, key=lambda item: item.purpose),
         feed=feed,
@@ -530,6 +533,17 @@ def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
     if listing is None or source is None or not observations:
         raise LookupError("listing not found")
     current = observations[0]
+    source_records = [
+        session.get(SourceRecord, item.source_record_id)
+        for item in observations
+        if item.source_record_id is not None
+    ]
+    is_fixture = any(
+        record is not None
+        and record.payload_json is not None
+        and record.payload_json.get("fixture") is True
+        for record in source_records
+    )
     version = session.scalar(
         select(ItemVersion)
         .where(ItemVersion.listing_id == listing_id)
@@ -540,9 +554,9 @@ def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
         .where(Analysis.listing_id == listing_id)
         .order_by(Analysis.created_at.desc())
     )
-    image_urls = list(
+    image_assets = list(
         session.scalars(
-            select(ImageAsset.original_url)
+            select(ImageAsset)
             .join(ObservationImage, ObservationImage.image_asset_id == ImageAsset.id)
             .where(
                 ObservationImage.observation_id.in_([item.id for item in observations])
@@ -550,6 +564,18 @@ def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
             .distinct()
         ).all()
     )
+    image_urls = [
+        image.original_url
+        for image in image_assets
+        if image.original_url is not None
+        and (
+            not is_fixture
+            or (
+                image.original_url.startswith("/")
+                and not image.original_url.startswith("//")
+            )
+        )
+    ]
     comparables: list[ComparableRead] = []
     costs: list[CostRead] = []
     if analysis:
@@ -558,8 +584,13 @@ def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
             .where(AnalysisComparable.analysis_id == analysis.id)
             .order_by(AnalysisComparable.rank)
         ).all()
+        seen_evidence: set[tuple[str, str, str]] = set()
         for audit in audits:
             evidence = session.get_one(MarketEvidence, audit.market_evidence_id)
+            evidence_key = _market_evidence_key(session, evidence)
+            if evidence_key in seen_evidence:
+                continue
+            seen_evidence.add(evidence_key)
             comparable_observation = (
                 session.get(ListingObservation, evidence.listing_observation_id)
                 if evidence.listing_observation_id
@@ -594,7 +625,8 @@ def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
     return ListingDetailRead(
         listing_id=listing_id,
         title=current.title or "Untitled listing",
-        source_url=source.canonical_url,
+        source_url=None if is_fixture else source.canonical_url,
+        is_fixture=is_fixture,
         provider_status=source.current_provider_status,
         image_urls=image_urls,
         attributes={
@@ -622,8 +654,9 @@ def listing_detail(session: Session, listing_id: str) -> ListingDetailRead:
                 retrieval_outcome=item.retrieval_outcome,
                 asking_price_minor=item.asking_price_minor,
                 provider_status=item.provider_status,
+                event_label=_observation_event_label(observations, index),
             )
-            for item in observations
+            for index, item in enumerate(observations)
         ],
         comparables=comparables,
         costs=costs,
@@ -635,6 +668,46 @@ def _latest_observation(session: Session, listing_id: str) -> ListingObservation
         select(ListingObservation)
         .where(ListingObservation.listing_id == listing_id)
         .order_by(ListingObservation.observed_at.desc())
+    )
+
+
+def _observation_event_label(observations: list[ListingObservation], index: int) -> str:
+    observation = observations[index]
+    outcome_labels = {
+        "explicitly_sold": "Reported sold",
+        "explicitly_ended": "Listing ended",
+        "missing": "Unavailable — outcome unknown",
+        "blocked": "Refresh blocked",
+        "error": "Refresh failed",
+    }
+    if observation.retrieval_outcome in outcome_labels:
+        return outcome_labels[observation.retrieval_outcome]
+    if index == len(observations) - 1:
+        return "First seen"
+    previous = observations[index + 1]
+    if previous.provider_status != "available":
+        return "Available again"
+    if observation.asking_price_minor != previous.asking_price_minor:
+        return "Price changed"
+    return "Listing details updated"
+
+
+def _market_evidence_key(
+    session: Session, evidence: MarketEvidence
+) -> tuple[str, str, str]:
+    provider_listing_id = evidence.provenance_json.get("provider_listing_id")
+    if not provider_listing_id and evidence.listing_observation_id:
+        observation = session.get(ListingObservation, evidence.listing_observation_id)
+        source = (
+            session.get(ListingSource, observation.listing_source_id)
+            if observation
+            else None
+        )
+        provider_listing_id = source.provider_listing_id if source else evidence.id
+    return (
+        evidence.provider,
+        str(provider_listing_id or evidence.id),
+        evidence.evidence_type,
     )
 
 
@@ -659,23 +732,7 @@ def _unique_market_evidence(
     ).all()
     unique: dict[tuple[str, str, str], MarketEvidence] = {}
     for evidence in evidence_rows:
-        provider_listing_id = evidence.provenance_json.get("provider_listing_id")
-        if not provider_listing_id and evidence.listing_observation_id:
-            observation = session.get(
-                ListingObservation, evidence.listing_observation_id
-            )
-            source = (
-                session.get(ListingSource, observation.listing_source_id)
-                if observation
-                else None
-            )
-            provider_listing_id = source.provider_listing_id if source else evidence.id
-        key = (
-            evidence.provider,
-            str(provider_listing_id or evidence.id),
-            evidence.evidence_type,
-        )
-        unique.setdefault(key, evidence)
+        unique.setdefault(_market_evidence_key(session, evidence), evidence)
     return list(unique.values())
 
 

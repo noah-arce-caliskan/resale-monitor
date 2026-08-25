@@ -107,10 +107,36 @@ function App() {
               <div>
                 <span>{detail.data?.reference_count ?? 0} reference comps</span>
                 <button disabled={run.isPending} onClick={() => run.mutate()}>
-                  {run.isPending ? "Searching…" : "Run now"}
+                  {run.isPending
+                    ? detail.data?.data_mode === "fixture"
+                      ? "Loading demo…"
+                      : "Searching eBay…"
+                    : detail.data?.data_mode === "fixture"
+                      ? "Load demo data"
+                      : detail.data?.data_mode === "live"
+                        ? "Search eBay"
+                        : "Run now"}
                 </button>
               </div>
             </section>
+            {detail.data ? (
+              <section
+                className={`mode-banner mode-banner--${detail.data.data_mode}`}
+                aria-label="Data mode"
+                role="status"
+              >
+                <strong>
+                  {detail.data.data_mode === "fixture"
+                    ? "Synthetic demo listings"
+                    : "Live eBay listings"}
+                </strong>
+                <span>
+                  {detail.data.data_mode === "fixture"
+                    ? "This mode exercises the product workflow but does not contact eBay or represent live inventory."
+                    : "Searches use eBay’s official Browse API and link to active source listings."}
+                </span>
+              </section>
+            ) : null}
             <section className="health-grid" aria-label="Source health">
               {detail.data?.source_health.map((source) => (
                 <article
@@ -120,8 +146,9 @@ function App() {
                   <span>{source.purpose}</span>
                   <b>{source.status.replace("_", " ")}</b>
                   <small>
-                    {source.records_seen} records · {source.new_listings} new ·{" "}
-                    {source.changed_listings} changed
+                    Last run · {source.records_seen} found ·{" "}
+                    {source.new_listings} new · {source.changed_listings}{" "}
+                    updated
                   </small>
                   {source.error_detail ? <p>{source.error_detail}</p> : null}
                 </article>
@@ -130,7 +157,11 @@ function App() {
             {detail.data?.feed.length === 0 ? (
               <section className="empty compact">
                 <h3>No listings collected yet</h3>
-                <p>Run the watchlist to load the labeled demo dataset.</p>
+                <p>
+                  {detail.data?.data_mode === "fixture"
+                    ? "Load the labeled synthetic dataset to exercise the workflow."
+                    : "Search eBay to collect current listings and reference evidence."}
+                </p>
               </section>
             ) : null}
             <section className="deal-grid" aria-label="Ranked deal feed">
@@ -231,6 +262,20 @@ function App() {
             {listing.data ? (
               <>
                 <h2>{listing.data.title}</h2>
+                {listing.data.image_urls.length ? (
+                  <div className="image-gallery">
+                    {listing.data.image_urls.map((url, index) => (
+                      <img
+                        key={url}
+                        src={url}
+                        alt={`${listing.data.title} view ${index + 1}`}
+                        onError={(event) => {
+                          event.currentTarget.hidden = true;
+                        }}
+                      />
+                    ))}
+                  </div>
+                ) : null}
                 <div className="evidence-metrics">
                   <div>
                     <small>Fair value</small>
@@ -257,9 +302,16 @@ function App() {
                 </div>
                 <p>
                   This deterministic result uses labeled asking-price
-                  comparisons and conservative costs. Demo evidence is not a
-                  verified sale.
+                  comparisons and conservative costs. Active asking prices are
+                  not verified sales.
                 </p>
+                {listing.data.is_fixture ? (
+                  <p className="fixture-note">
+                    <strong>Synthetic example.</strong> This listing exists only
+                    to test ingestion, valuation, and interface behavior; it has
+                    no marketplace page.
+                  </p>
+                ) : null}
                 <section>
                   <h3>Extracted attributes</h3>
                   <dl className="attribute-list">
@@ -309,23 +361,25 @@ function App() {
                   <ol className="timeline">
                     {listing.data.observations.map((observation) => (
                       <li key={observation.observed_at}>
-                        <b>{money(observation.asking_price_minor)}</b>
+                        <b>{observation.event_label}</b>
                         <span>
-                          {observation.retrieval_outcome} ·{" "}
+                          {money(observation.asking_price_minor)} ·{" "}
                           {new Date(observation.observed_at).toLocaleString()}
                         </span>
                       </li>
                     ))}
                   </ol>
                 </section>
-                <a
-                  className="source-link"
-                  href={listing.data.source_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Open source listing
-                </a>
+                {!listing.data.is_fixture && listing.data.source_url ? (
+                  <a
+                    className="source-link"
+                    href={listing.data.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open source listing
+                  </a>
+                ) : null}
               </>
             ) : null}
             <button onClick={() => setListingId(null)}>Close</button>

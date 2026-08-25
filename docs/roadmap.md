@@ -26,9 +26,11 @@ valuation baseline remain before Phase 0 is complete.
 
 Core watchlist creation, fixture-backed eBay ingestion, canonical persistence,
 source health, deterministic valuation, reference browsing, listing history,
-and the ranked React feed are implemented on `feat/ebay-watchlist-mvp`. Live
-credential verification, scheduled refresh, extraction/correction, and
-evaluation calibration remain before Phase 1 is complete.
+and the ranked React feed are implemented on `feat/ebay-watchlist-mvp`. The live
+adapter is fixture-contract tested and awaits eBay developer-account approval
+for production credential verification. Scheduled refresh,
+extraction/correction, and evaluation calibration remain before Phase 1 is
+complete.
 
 - Build a personal local web application.
 - Implement Watchlists, Create or Edit Watchlist, Deal Feed, and Listing

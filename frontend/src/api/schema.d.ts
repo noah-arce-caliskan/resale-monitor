@@ -185,6 +185,8 @@ export interface components {
             fair_value_midpoint_minor: number | null;
             /** Image Urls */
             image_urls: string[];
+            /** Is Fixture */
+            is_fixture: boolean;
             /** Listing Id */
             listing_id: string;
             /** Observations */
@@ -194,7 +196,7 @@ export interface components {
             /** Provider Status */
             provider_status: string;
             /** Source Url */
-            source_url: string;
+            source_url: string | null;
             /** Title */
             title: string;
             /** Total Cost High Minor */
@@ -221,6 +223,8 @@ export interface components {
         ObservationRead: {
             /** Asking Price Minor */
             asking_price_minor: number | null;
+            /** Event Label */
+            event_label: string;
             /**
              * Observed At
              * Format: date-time
@@ -337,6 +341,11 @@ export interface components {
         };
         /** WatchlistDetailRead */
         WatchlistDetailRead: {
+            /**
+             * Data Mode
+             * @enum {string}
+             */
+            data_mode: "fixture" | "live";
             /** Feed */
             feed: components["schemas"]["FeedItemRead"][];
             /** Reference Count */

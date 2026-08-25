@@ -245,6 +245,10 @@
             "title": "Image Urls",
             "type": "array"
           },
+          "is_fixture": {
+            "title": "Is Fixture",
+            "type": "boolean"
+          },
           "listing_id": {
             "title": "Listing Id",
             "type": "string"
@@ -265,8 +269,15 @@
             "type": "string"
           },
           "source_url": {
-            "title": "Source Url",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
           },
           "title": {
             "title": "Title",
@@ -299,6 +310,7 @@
           "listing_id",
           "title",
           "source_url",
+          "is_fixture",
           "provider_status",
           "image_urls",
           "attributes",
@@ -348,6 +360,10 @@
             ],
             "title": "Asking Price Minor"
           },
+          "event_label": {
+            "title": "Event Label",
+            "type": "string"
+          },
           "observed_at": {
             "format": "date-time",
             "title": "Observed At",
@@ -366,7 +382,8 @@
           "observed_at",
           "retrieval_outcome",
           "asking_price_minor",
-          "provider_status"
+          "provider_status",
+          "event_label"
         ],
         "title": "ObservationRead",
         "type": "object"
@@ -659,6 +676,14 @@
       },
       "WatchlistDetailRead": {
         "properties": {
+          "data_mode": {
+            "enum": [
+              "fixture",
+              "live"
+            ],
+            "title": "Data Mode",
+            "type": "string"
+          },
           "feed": {
             "items": {
               "$ref": "#/components/schemas/FeedItemRead"
@@ -686,6 +711,7 @@
           }
         },
         "required": [
+          "data_mode",
           "reference_count",
           "source_health",
           "feed",

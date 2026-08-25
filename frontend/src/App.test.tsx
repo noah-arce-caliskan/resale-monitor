@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, expect, it, vi } from "vitest";
 import App from "./App";
@@ -47,6 +47,7 @@ it("creates a Hartford watchlist from the empty state", async () => {
     .mockResolvedValue(
       new Response(
         JSON.stringify({
+          data_mode: "fixture",
           reference_count: 0,
           source_health: [],
           feed: [],
@@ -73,12 +74,14 @@ it("creates a Hartford watchlist from the empty state", async () => {
 it("runs a watchlist and opens evidence", async () => {
   const watch = { id: "watch-1", name: "Mopeds", center_place: "Hartford, CT" };
   const empty = {
+    data_mode: "fixture",
     reference_count: 0,
     source_health: [],
     feed: [],
     references: [],
   };
   const populated = {
+    data_mode: "fixture",
     reference_count: 5,
     source_health: [
       {
@@ -135,7 +138,8 @@ it("runs a watchlist and opens evidence", async () => {
   const listing = {
     listing_id: "one",
     title: "Honda Metropolitan",
-    source_url: "https://www.ebay.com/itm/one",
+    source_url: null,
+    is_fixture: true,
     provider_status: "available",
     image_urls: ["/demo-moped.svg"],
     attributes: {
@@ -158,6 +162,7 @@ it("runs a watchlist and opens evidence", async () => {
         retrieval_outcome: "available",
         asking_price_minor: 90000,
         provider_status: "available",
+        event_label: "First seen",
       },
     ],
     comparables: [
@@ -198,12 +203,17 @@ it("runs a watchlist and opens evidence", async () => {
   });
   vi.stubGlobal("fetch", fetchMock);
   renderApp();
-  await userEvent.click(await screen.findByRole("button", { name: "Run now" }));
+  await userEvent.click(
+    await screen.findByRole("button", { name: "Load demo data" }),
+  );
   await userEvent.click(
     await screen.findByRole("button", { name: /Honda Metropolitan/ }),
   );
   expect(
-    await screen.findByText(/Demo evidence is not a verified sale/),
+    await screen.findByText(/Synthetic demo listings/),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/does not contact eBay or represent live inventory/i),
   ).toBeInTheDocument();
   expect(screen.getByText("Comparable evidence")).toBeInTheDocument();
   expect(screen.getAllByText("Reference Honda")).toHaveLength(2);
@@ -212,9 +222,19 @@ it("runs a watchlist and opens evidence", async () => {
   expect(
     screen.getByText("Price and availability history"),
   ).toBeInTheDocument();
+  expect(screen.getByText("First seen")).toBeInTheDocument();
+  const listingImage = screen.getByRole("img", {
+    name: "Honda Metropolitan view 1",
+  });
+  expect(listingImage).toBeInTheDocument();
+  fireEvent.error(listingImage);
+  expect(listingImage).not.toBeVisible();
+  expect(
+    screen.queryByRole("link", { name: "Open source listing" }),
+  ).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: "Close" }));
   expect(
-    screen.queryByText(/Demo evidence is not a verified sale/),
+    screen.queryByRole("dialog", { name: "Listing evidence" }),
   ).not.toBeInTheDocument();
 });
 
@@ -232,6 +252,82 @@ it("opens and cancels the new-watchlist dialog", async () => {
   expect(
     screen.queryByRole("form", { name: "Create watchlist" }),
   ).not.toBeInTheDocument();
+});
+
+it("labels live mode and links to a real source listing", async () => {
+  const watch = {
+    id: "watch-live",
+    name: "Live mopeds",
+    center_place: "Hartford, CT",
+  };
+  const detail = {
+    data_mode: "live",
+    reference_count: 1,
+    source_health: [],
+    references: [],
+    feed: [
+      {
+        listing_id: "live-one",
+        title: "Live Honda Metropolitan",
+        asking_price_minor: 120000,
+        image_url: "https://i.ebayimg.com/images/live-one.jpg",
+        opportunity_label: "watch",
+        confidence_bp: 5000,
+        fair_value_low_minor: 150000,
+        conservative_advantage_minor: 5000,
+      },
+    ],
+  };
+  const listing = {
+    listing_id: "live-one",
+    title: "Live Honda Metropolitan",
+    source_url: "https://www.ebay.com/itm/live-one",
+    is_fixture: false,
+    provider_status: "available",
+    image_urls: [],
+    attributes: {},
+    opportunity_label: "watch",
+    confidence_bp: 5000,
+    fair_value_low_minor: 150000,
+    fair_value_midpoint_minor: 160000,
+    fair_value_high_minor: 170000,
+    total_cost_low_minor: 130000,
+    total_cost_high_minor: 145000,
+    conservative_advantage_minor: 5000,
+    observations: [],
+    comparables: [],
+    costs: [],
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify(
+            url === "/api/watchlists"
+              ? [watch]
+              : url === "/api/listings/live-one"
+                ? listing
+                : detail,
+          ),
+          { status: 200 },
+        ),
+      ),
+    ),
+  );
+
+  renderApp();
+  expect(
+    await screen.findByRole("button", { name: "Search eBay" }),
+  ).toBeInTheDocument();
+  expect(screen.getByText("Live eBay listings")).toBeInTheDocument();
+  await userEvent.click(
+    screen.getByRole("button", { name: /Live Honda Metropolitan/ }),
+  );
+  expect(
+    await screen.findByRole("link", { name: "Open source listing" }),
+  ).toHaveAttribute("href", "https://www.ebay.com/itm/live-one");
+  expect(screen.queryByText("Synthetic example.")).not.toBeInTheDocument();
 });
 
 it("shows an unavailable backend", async () => {

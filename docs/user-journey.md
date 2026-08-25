@@ -93,6 +93,9 @@ Which newly discovered listings deserve my attention first?
 ### Required content
 
 - Watchlist summary, last run, next run, enabled-source health, and **Run now**.
+- An explicit data-mode banner and action label: fixture mode loads synthetic
+  examples and live mode searches eBay. Synthetic records never imply current
+  inventory or offer an original-listing link.
 - Ranked listing cards with image, title, source, location or shipping context,
   asking price, first seen, opportunity label, confidence, and the strongest
   positive and negative factor.
@@ -131,8 +134,9 @@ Is this opportunity worth investigating, why, and what has changed?
 - Listing title, source, current asking price, location or delivery context, and
   current status.
 - Image gallery.
-- **Open original**, **Correct attributes**, **Update manually**, and, when the
-  provider allows it, **Check now** actions.
+- **Open original** for live records, plus **Correct attributes**, **Update
+  manually**, and, when the provider allows it, **Check now** actions. Fixture
+  records instead explain that no marketplace page exists.
 
 ### Overview section
 
@@ -165,6 +169,8 @@ later extraction run.
 
 - First seen, last checked, and first missing times.
 - Chronological observations of price, availability, and explicit status.
+- A plain-language event label such as first seen, price changed, details
+  updated, unavailable with unknown outcome, or available again.
 - Price history visualization once at least two prices exist.
 - Acquisition method and status confidence for each observation.
 - An unavailable listing remains **Unavailable—outcome unknown** unless there is

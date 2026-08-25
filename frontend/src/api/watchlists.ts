@@ -26,6 +26,7 @@ export type ReferenceListing = {
   evidence_type: string;
 };
 export type WatchlistDetail = {
+  data_mode: "fixture" | "live";
   reference_count: number;
   source_health: SourceHealth[];
   feed: FeedItem[];
@@ -34,7 +35,8 @@ export type WatchlistDetail = {
 export type ListingDetail = {
   listing_id: string;
   title: string;
-  source_url: string;
+  source_url: string | null;
+  is_fixture: boolean;
   provider_status: string;
   image_urls: string[];
   attributes: Record<string, string | number | null>;
@@ -51,6 +53,7 @@ export type ListingDetail = {
     retrieval_outcome: string;
     asking_price_minor: number | null;
     provider_status: string;
+    event_label: string;
   }[];
   comparables: {
     market_evidence_id: string;

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -34,6 +35,7 @@ class ReferenceRead(BaseModel):
 
 
 class WatchlistDetailRead(BaseModel):
+    data_mode: Literal["fixture", "live"]
     reference_count: int
     source_health: list[SourceHealthRead]
     feed: list[FeedItemRead]
@@ -45,6 +47,7 @@ class ObservationRead(BaseModel):
     retrieval_outcome: str
     asking_price_minor: int | None
     provider_status: str
+    event_label: str
 
 
 class ComparableRead(BaseModel):
@@ -67,7 +70,8 @@ class CostRead(BaseModel):
 class ListingDetailRead(BaseModel):
     listing_id: str
     title: str
-    source_url: str
+    source_url: str | None
+    is_fixture: bool
     provider_status: str
     image_urls: list[str]
     attributes: dict[str, str | int | None]

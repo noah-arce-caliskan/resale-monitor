@@ -3,7 +3,16 @@ from dataclasses import replace
 import pytest
 from fastapi import FastAPI
 from httpx import AsyncClient
+from sqlalchemy import select
 
+from resale_monitor.models import (
+    AnalysisComparable,
+    ImageAsset,
+    ListingObservation,
+    MarketEvidence,
+    ObservationImage,
+    WatchlistListing,
+)
 from resale_monitor.providers.ebay import FixtureEbayClient, ProviderRateLimitError
 from resale_monitor.services.ingestion import record_retrieval_outcome
 
@@ -89,6 +98,7 @@ async def test_fixture_run_builds_ranked_feed_and_is_idempotent(
     }
     assert detail.status_code == 200
     payload = detail.json()
+    assert payload["data_mode"] == "fixture"
     assert payload["reference_count"] == 5
     assert len(payload["references"]) == 5
     assert [item["status"] for item in payload["source_health"]] == [
@@ -102,11 +112,101 @@ async def test_fixture_run_builds_ranked_feed_and_is_idempotent(
     listing = await client.get(f"/api/listings/{payload['feed'][0]['listing_id']}")
     assert listing.status_code == 200
     evidence = listing.json()
+    assert evidence["is_fixture"] is True
+    assert evidence["source_url"] is None
     assert evidence["attributes"]["make"] == "Honda"
     assert len(evidence["comparables"]) == 5
     assert evidence["comparables"][0]["evidence_type"] == "active_asking"
     assert evidence["costs"][0]["kind"] == "risk_reserve"
     assert len(evidence["observations"]) == 1
+    assert evidence["observations"][0]["event_label"] == "First seen"
+
+
+async def test_listing_detail_collapses_legacy_duplicate_comparables(
+    app: FastAPI, client: AsyncClient
+) -> None:
+    created = await client.post(
+        "/api/watchlists",
+        json={
+            "name": "Legacy evidence",
+            "query": "moped",
+            "center_place": "Hartford, CT",
+            "radius_miles": 50,
+        },
+    )
+    watchlist_id = created.json()["id"]
+    await client.post(f"/api/watchlists/{watchlist_id}/runs")
+    feed = (await client.get(f"/api/watchlists/{watchlist_id}")).json()["feed"]
+
+    with app.state.database.session() as session:
+        projection = session.scalar(
+            select(WatchlistListing).where(
+                WatchlistListing.watchlist_id == watchlist_id,
+                WatchlistListing.listing_id == feed[0]["listing_id"],
+                WatchlistListing.role == "acquisition",
+            )
+        )
+        assert projection is not None
+        first_audit = session.scalar(
+            select(AnalysisComparable)
+            .where(AnalysisComparable.analysis_id == projection.latest_analysis_id)
+            .order_by(AnalysisComparable.rank)
+        )
+        assert first_audit is not None
+        original = session.get_one(MarketEvidence, first_audit.market_evidence_id)
+        duplicate = MarketEvidence(
+            evidence_type=original.evidence_type,
+            listing_observation_id=original.listing_observation_id,
+            provider=original.provider,
+            price_minor=original.price_minor,
+            shipping_minor=original.shipping_minor,
+            currency=original.currency,
+            location_text=original.location_text,
+            observed_at=original.observed_at,
+            provenance_json=original.provenance_json,
+            natural_fingerprint="legacy-duplicate",
+        )
+        session.add(duplicate)
+        session.flush()
+        session.add(
+            AnalysisComparable(
+                analysis_id=projection.latest_analysis_id,
+                market_evidence_id=duplicate.id,
+                decision="included",
+                similarity_bp=first_audit.similarity_bp,
+                reliability_bp=first_audit.reliability_bp,
+                recency_bp=first_audit.recency_bp,
+                geography_bp=first_audit.geography_bp,
+                final_weight_bp=first_audit.final_weight_bp,
+                rank=99,
+                reason_codes_json=first_audit.reason_codes_json,
+            )
+        )
+        current_observation = session.scalar(
+            select(ListingObservation)
+            .where(ListingObservation.listing_id == feed[0]["listing_id"])
+            .order_by(ListingObservation.observed_at.desc())
+        )
+        assert current_observation is not None
+        legacy_image = ImageAsset(
+            original_url="https://images.example/legacy-placeholder.jpg",
+            display_strategy="remote",
+            retention_status="not_retained",
+        )
+        session.add(legacy_image)
+        session.flush()
+        session.add(
+            ObservationImage(
+                observation_id=current_observation.id,
+                image_asset_id=legacy_image.id,
+                ordinal=99,
+                is_primary=False,
+            )
+        )
+
+    listing = (await client.get(f"/api/listings/{feed[0]['listing_id']}")).json()
+    assert len(listing["comparables"]) == 5
+    assert listing["image_urls"] == ["/demo-moped.svg"]
 
 
 async def test_changed_listing_appends_observation_history(
@@ -164,6 +264,10 @@ async def test_changed_listing_appends_observation_history(
     assert [item["asking_price_minor"] for item in listing["observations"]] == [
         850_00,
         900_00,
+    ]
+    assert [item["event_label"] for item in listing["observations"]] == [
+        "Price changed",
+        "First seen",
     ]
     assert len(listing["comparables"]) == 5
 

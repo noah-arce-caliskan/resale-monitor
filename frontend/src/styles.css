@@ -229,6 +229,31 @@ h1 {
   gap: 0.75rem;
   margin: 0 0 1.5rem;
 }
+.mode-banner {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.35rem 1rem;
+  align-items: center;
+  margin: 0 0 1.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #9ba99d;
+  border-radius: 1rem;
+  background: #edf3eb;
+}
+.mode-banner strong {
+  color: #24523e;
+}
+.mode-banner span {
+  color: #526158;
+  font-size: 0.85rem;
+}
+.mode-banner--fixture {
+  border-color: #d39a67;
+  background: #fff3e5;
+}
+.mode-banner--fixture strong {
+  color: #8a4b22;
+}
 .health {
   display: grid;
   gap: 0.25rem;
@@ -374,6 +399,26 @@ h1 {
   padding-top: 1rem;
   border-top: 1px solid #dedbd1;
 }
+.image-gallery {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  justify-content: stretch !important;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+.image-gallery img {
+  width: 100%;
+  max-height: 22rem;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  background: #dde5dd;
+}
+.fixture-note {
+  padding: 0.85rem 1rem;
+  border-left: 4px solid #c47032;
+  border-radius: 0.4rem;
+  background: #fff3e5;
+}
 .listing-workspace h3 {
   margin-bottom: 0.5rem;
   font-family: Georgia, serif;
@@ -452,6 +497,9 @@ h1 {
   .workspace-heading {
     align-items: start;
     flex-direction: column;
+  }
+  .mode-banner {
+    grid-template-columns: 1fr;
   }
   .evidence-metrics {
     grid-template-columns: 1fr 1fr;

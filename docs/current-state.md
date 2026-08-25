@@ -31,7 +31,13 @@ and GitHub Actions CI.
   reference facts change.
 - React watchlist creation, source health, ranked acquisition feed, expandable
   reference inventory, and listing workspace with attributes, ranges, costs,
-  five auditable comparables, images, source link, and observation history.
+  five auditable comparables, images, and labeled observation history. A visible
+  data-mode banner distinguishes synthetic from live inventory; fixtures never
+  expose fake marketplace links, while live records retain their reviewed eBay
+  source link.
+- Read-time compatibility for local pre-release data collapses duplicate legacy
+  comparables and suppresses obsolete remote placeholder images without deleting
+  immutable evidence history.
 
 Backend and frontend coverage remain above 90%. The flow has been verified from
 a fresh migration in desktop and 390-pixel mobile browser layouts without
@@ -40,13 +46,13 @@ console errors or horizontal overflow.
 ## Known boundary
 
 Fixtures prove the local pipeline but are not market evidence. Live eBay
-verification requires the owner's production credentials. Model-assisted
+verification is waiting on the owner's eBay developer-account approval and
+production credentials. Model-assisted
 extraction, user correction, lifecycle refresh, completed-sale evidence,
 notifications, deployment, and additional marketplaces remain deferred.
 
 ## Next step
 
-Review and merge the MVP pull request. Then verify live Browse with eBay
-credentials, replace fixture evidence with a reviewed dataset, and calibrate
-comparable selection before adding model extraction or another source. Do not
-merge this feature branch automatically.
+When eBay approves the developer account, configure the ignored `.env` and
+verify live OAuth, Hartford acquisition, and nationwide reference searches.
+Then review the MVP pull request. Do not merge this feature branch automatically.
